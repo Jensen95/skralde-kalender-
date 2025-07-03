@@ -24,26 +24,29 @@ fi
 
 echo "✅ Authenticated with Cloudflare"
 
-# Check if KV namespace exists
-echo "🗄️  Checking KV namespace configuration..."
-KV_ID=$(grep -o 'id = "[^"]*"' wrangler.toml | head -1 | cut -d'"' -f2)
+# Check if D1 database exists
+echo "🗄️  Checking D1 database configuration..."
+DB_ID=$(grep -o 'database_id = "[^"]*"' wrangler.toml | cut -d'"' -f2)
 
-if [ "$KV_ID" = "your-kv-namespace-id" ]; then
-    echo "⚠️  KV namespace not configured. Creating..."
+if [ "$DB_ID" = "your-d1-database-id" ]; then
+    echo "⚠️  D1 database not configured. Creating..."
     
-    echo "Creating production KV namespace..."
-    wrangler kv:namespace create "CALENDAR_EVENTS"
-    
-    echo "Creating preview KV namespace..."
-    wrangler kv:namespace create "CALENDAR_EVENTS" --preview
+    echo "Creating D1 database..."
+    wrangler d1 create ice-calendar-db
     
     echo ""
-    echo "⚠️  Please update wrangler.toml with the KV namespace IDs printed above"
+    echo "⚠️  Please update wrangler.toml with the D1 database ID printed above"
     echo "   Then run this script again."
     exit 1
 fi
 
-echo "✅ KV namespace configured"
+echo "✅ D1 database configured"
+
+# Run database migrations
+echo "🔄 Running database migrations..."
+wrangler d1 execute ice-calendar-db --local --command "SELECT name FROM sqlite_master WHERE type='table';" || {
+    echo "Initializing database schema..."
+}
 
 # Type check
 echo "🔍 Running type check..."

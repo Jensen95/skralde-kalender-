@@ -25,17 +25,14 @@ npm install -g wrangler
 wrangler login
 ```
 
-### 2.2 Create KV Namespace
+### 2.2 Create D1 Database
 
 ```bash
-# Create production namespace
-wrangler kv:namespace create "CALENDAR_EVENTS"
-
-# Create preview namespace
-wrangler kv:namespace create "CALENDAR_EVENTS" --preview
+# Create D1 database
+wrangler d1 create ice-calendar-db
 ```
 
-Copy the namespace IDs from the output and update `wrangler.toml`.
+Copy the database ID from the output and update `wrangler.toml`.
 
 ### 2.3 Update wrangler.toml
 
@@ -44,10 +41,10 @@ name = "your-calendar-worker"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
-[[kv_namespaces]]
-binding = "CALENDAR_EVENTS"
-id = "paste-your-kv-namespace-id-here"
-preview_id = "paste-your-preview-kv-namespace-id-here"
+[[d1_databases]]
+binding = "DB"
+database_name = "ice-calendar-db"
+database_id = "paste-your-d1-database-id-here"
 
 [vars]
 CALENDAR_NAME = "Your Calendar Name"
@@ -150,7 +147,7 @@ https://your-worker.your-subdomain.workers.dev/calendar.ics
 1. **Cache**: Calendar apps cache ICS files (wait 15-30 minutes)
 2. **Force Refresh**: Most apps have a refresh option
 3. **Check Events**: Visit `/events` endpoint to see stored events
-4. **KV Storage**: Use `wrangler kv:key list --binding=CALENDAR_EVENTS`
+4. **D1 Database**: Use `wrangler d1 execute ice-calendar-db --command "SELECT * FROM calendar_events LIMIT 10;"`
 
 ### Development Issues
 

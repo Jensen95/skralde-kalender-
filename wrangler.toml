@@ -2,11 +2,11 @@ name = "ice-calendar-worker"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
-# KV storage for calendar events
-[[kv_namespaces]]
-binding = "CALENDAR_EVENTS"
-id = "your-kv-namespace-id"  # Replace with your actual KV namespace ID
-preview_id = "your-preview-kv-namespace-id"  # Replace with your preview KV namespace ID
+# D1 database for calendar events
+[[d1_databases]]
+binding = "DB"
+database_name = "ice-calendar-db"
+database_id = "your-d1-database-id"  # Replace with your actual D1 database ID
 
 # Environment variables
 [vars]

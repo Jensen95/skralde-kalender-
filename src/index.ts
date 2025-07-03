@@ -3,11 +3,14 @@
 import { Env } from './types';
 import { generateICalendar, generateCalendarResponse } from './calendar';
 import { EmailEventParser, parseEmailMessage } from './email';
-import { storeEvent, getAllEvents, deleteEvent } from './utils';
+import { storeEvent, getAllEvents, deleteEvent, initializeDatabase } from './database';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    
+    // Initialize database on first request
+    await initializeDatabase(env.DB);
     
     // Handle CORS preflight requests
     if (request.method === 'OPTIONS') {
@@ -50,7 +53,7 @@ export default {
       
       // Store the events
       for (const event of events) {
-        await storeEvent(env.CALENDAR_EVENTS, event);
+        await storeEvent(env.DB, event);
         console.log(`Stored event: ${event.title} at ${event.start}`);
       }
       
@@ -87,7 +90,7 @@ async function handleEventsRequest(request: Request, env: Env): Promise<Response
 
 async function handleGetEvents(env: Env): Promise<Response> {
   try {
-    const events = await getAllEvents(env.CALENDAR_EVENTS);
+    const events = await getAllEvents(env.DB);
     return new Response(JSON.stringify(events, null, 2), {
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +112,7 @@ async function handleDeleteEvent(request: Request, env: Env): Promise<Response> 
       return new Response('Event ID required', { status: 400 });
     }
     
-    const success = await deleteEvent(env.CALENDAR_EVENTS, eventId);
+    const success = await deleteEvent(env.DB, eventId);
     
     if (success) {
       return new Response(JSON.stringify({ success: true }), {

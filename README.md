@@ -6,8 +6,9 @@ A Cloudflare Worker that serves an iCalendar (ICS) file populated by incoming em
 
 - 📅 **iCalendar Server**: Serves RFC 5545 compliant iCalendar files
 - 📧 **Email Processing**: Automatically extracts events from forwarded emails
-- ☁️ **Cloudflare Integration**: Uses Cloudflare KV for storage and email routing
-- 🔍 **Smart Parsing**: Recognizes common date/time patterns in emails
+- ☁️ **Cloudflare Integration**: Uses Cloudflare D1 database for storage and email routing
+- 🔍 **Smart Parsing**: Recognizes common date/time patterns in emails including Danish formats
+- 🗑️ **Waste Collection Support**: Special handling for Danish waste collection emails
 - 🎨 **Web Interface**: Simple web UI for calendar management
 - 🔗 **REST API**: JSON API for event management
 
@@ -64,11 +65,22 @@ npm run deploy
    - `2024-01-15 15:00`
    - `01/15/2024 3:00 PM`
    - `Monday, January 15th at 3 PM`
+   - `mandag d.07-07-2025` (Danish format)
+   - `d.07-07-2025` (Danish short format)
 
 3. **Location Detection**:
    - `Location: Conference Room A`
    - `Where: Zoom meeting`
    - `at 123 Main Street`
+   - `adressen Nøddeskellet 8, 2730 Herlev` (Danish address format)
+
+4. **Danish Waste Collection Types**:
+   - `storskrald` (Bulky waste)
+   - `glas/metal` (Glass/metal)
+   - `papir` (Paper)
+   - `restaffald` (Residual waste)
+   - `madaffald` (Food waste)
+   - `genbrugsplast` (Recycling plastic)
 
 ## API Endpoints
 
@@ -143,6 +155,17 @@ Date: Friday, December 22nd at 6:00 PM
 Where: The Grand Ballroom, 456 Oak Street
 
 Food and drinks will be provided.
+```
+
+### Danish Waste Collection Email
+```
+Subject: Affaldsafhentning - Storskrald
+
+Kære Morten Hartvig Jensen.
+
+Du vil mandag d.07-07-2025 få afhentet storskrald på adressen Nøddeskellet 8, 2730 Herlev.
+Afmeld/rediger din tilmelding her: Servicen kan ændres/afmeldes på her
+Dette er en automatisk afsendt e-mail, som ikke kan besvares.
 ```
 
 ## Configuration

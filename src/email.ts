@@ -1,6 +1,6 @@
 import PostalMime from 'postal-mime';
 import { CalendarEvent, EmailMessage, EmailParser, ParsedEmailDate } from './types';
-import { generateEventId } from './utils';
+import { generateEventId } from './database';
 
 export class EmailEventParser implements EmailParser {
   async extractEvents(email: EmailMessage): Promise<CalendarEvent[]> {
@@ -45,8 +45,15 @@ export class EmailEventParser implements EmailParser {
       location?: string;
     }> = [];
 
-    // Look for common patterns in emails
-    const datePatterns = [
+    // Look for Danish waste collection patterns and common date patterns
+    const danishDatePatterns = [
+      // Danish format: "mandag d.07-07-2025" or similar
+      /(?:mandag|tirsdag|onsdag|torsdag|fredag|lørdag|søndag)\s+d\.(\d{2}-\d{2}-\d{4})/gi,
+      // Alternative Danish format: "d. 07-07-2025" or "d.07-07-2025"
+      /d\.?\s*(\d{2}-\d{2}-\d{4})/gi,
+    ];
+    
+    const generalDatePatterns = [
       // Match patterns like "January 15, 2024 at 3:00 PM"
       /(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)/gi,
       // Match patterns like "2024-01-15 15:00" or "01/15/2024 3:00 PM"
@@ -54,43 +61,50 @@ export class EmailEventParser implements EmailParser {
       // Match patterns like "Monday, January 15th at 3 PM"
       /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?/gi
     ];
+    
+    const allDatePatterns = [...danishDatePatterns, ...generalDatePatterns];
 
     const fullText = `${subject} ${content}`;
     
-    // Extract dates from the text
-    const foundDates: Date[] = [];
-    for (const pattern of datePatterns) {
-      const matches = fullText.match(pattern);
-      if (matches) {
-        for (const match of matches) {
-          const date = this.parseDate(match);
-          if (date) {
-            foundDates.push(date);
+          // Extract dates from the text
+      const foundDates: Date[] = [];
+      for (const pattern of allDatePatterns) {
+        const matches = fullText.match(pattern);
+        if (matches) {
+          for (const match of matches) {
+                         const date = this.parseDate(match);
+            if (date) {
+              foundDates.push(date);
+            }
           }
         }
       }
-    }
 
     // If we found dates, create events
     if (foundDates.length > 0) {
-      // Use the subject as the title, clean it up
-      const title = this.cleanEventTitle(subject);
-      
-      // Look for location keywords
-      const location = this.extractLocation(fullText);
-      
-      for (const startDate of foundDates) {
-        // Default duration is 1 hour
-        const endDate = new Date(startDate.getTime() + (60 * 60 * 1000));
+              // Extract event type and create appropriate title
+        const eventType = this.extractWasteCollectionType(fullText);
+        const title = this.createEventTitle(subject, eventType);
         
-        events.push({
-          title,
-          description: this.truncateText(content, 200),
-          start: startDate,
-          end: endDate,
-          location
-        });
-      }
+        // Look for location keywords (including Danish addresses)
+        const location = this.extractLocation(fullText);
+      
+              for (const startDate of foundDates) {
+          // Default duration is 1 hour
+          const endDate = new Date(startDate.getTime() + (60 * 60 * 1000));
+          
+          const eventData: any = {
+            title,
+            description: this.truncateText(content, 200),
+            start: startDate,
+            end: endDate,
+            location,
+            eventType,
+            sourceEmail: `${subject}\n\n${content.substring(0, 500)}`
+          };
+          
+          events.push(eventData);
+        }
     }
 
     return events;
@@ -98,7 +112,18 @@ export class EmailEventParser implements EmailParser {
 
   private parseDate(dateString: string): Date | null {
     try {
-      // Try to parse the date string
+      // Handle Danish date format: "d.07-07-2025" or "mandag d.07-07-2025"
+      const danishMatch = dateString.match(/(\d{2}-\d{2}-\d{4})/);
+      if (danishMatch) {
+        const [day, month, year] = danishMatch[1].split('-');
+        // Default time to 8:00 AM for waste collection
+        const date = new Date(`${year}-${month}-${day}T08:00:00`);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      }
+      
+      // Try to parse the date string normally
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
         return null;
@@ -107,6 +132,39 @@ export class EmailEventParser implements EmailParser {
     } catch {
       return null;
     }
+  }
+
+  private extractWasteCollectionType(text: string): string {
+    const wasteTypes = {
+      'storskrald': 'storskrald',
+      'glas/metal': 'glas_metal',
+      'papir': 'papir',
+      'restaffald': 'restaffald',
+      'madaffald': 'madaffald',
+      'genbrugsplast': 'genbrugsplast'
+    };
+
+    for (const [pattern, type] of Object.entries(wasteTypes)) {
+      if (text.toLowerCase().includes(pattern)) {
+        return type;
+      }
+    }
+
+    return 'general';
+  }
+
+  private createEventTitle(subject: string, eventType: string): string {
+    const wasteTypeNames = {
+      'storskrald': 'Storskrald afhentning',
+      'glas_metal': 'Glas/metal afhentning',
+      'papir': 'Papir afhentning',
+      'restaffald': 'Restaffald afhentning',
+      'madaffald': 'Madaffald afhentning',
+      'genbrugsplast': 'Genbrugsplast afhentning',
+      'general': this.cleanEventTitle(subject)
+    };
+
+    return wasteTypeNames[eventType as keyof typeof wasteTypeNames] || this.cleanEventTitle(subject);
   }
 
   private cleanEventTitle(subject: string): string {
@@ -118,6 +176,15 @@ export class EmailEventParser implements EmailParser {
   }
 
   private extractLocation(text: string): string | undefined {
+    // Look for Danish address patterns first
+    const danishAddressPattern = /adressen\s+([^,\n.]+)/gi;
+    const danishMatch = text.match(danishAddressPattern);
+    if (danishMatch && danishMatch[0]) {
+      // Extract everything after "adressen"
+      const addressPart = danishMatch[0].replace(/adressen\s+/gi, '').trim();
+      return addressPart;
+    }
+
     // Look for common location patterns
     const locationPatterns = [
       /(?:at|@)\s+([^,\n.]+(?:room|office|building|street|avenue|drive|road|conference|zoom|teams|meet))/gi,

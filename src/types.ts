@@ -23,7 +23,7 @@ export interface EmailEventExtraction {
 }
 
 export interface Env {
-  CALENDAR_EVENTS: KVNamespace;
+  DB: D1Database;
   CALENDAR_NAME: string;
   CALENDAR_DESCRIPTION: string;
 }

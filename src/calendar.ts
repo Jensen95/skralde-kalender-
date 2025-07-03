@@ -1,10 +1,10 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import { CalendarEvent, Env } from './types';
-import { getAllEvents } from './utils';
+import { getAllEvents } from './database';
 
 export async function generateICalendar(env: Env): Promise<string> {
-  const events = await getAllEvents(env.CALENDAR_EVENTS);
+  const events = await getAllEvents(env.DB);
   
   const calendarLines: string[] = [
     'BEGIN:VCALENDAR',
