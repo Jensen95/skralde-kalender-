@@ -5,7 +5,7 @@ import { CalendarEvent, Env } from './types';
 // Mock database functions
 vi.mock('./database', () => ({
   getAllEvents: vi.fn(),
-  getEventsByAddress: vi.fn()
+  getEventsByAddress: vi.fn(),
 }));
 
 import { getAllEvents, getEventsByAddress } from './database';
@@ -18,7 +18,7 @@ describe('Calendar Generation', () => {
   const mockEnv: Env = {
     DB: {} as any,
     CALENDAR_NAME: 'Test Calendar',
-    CALENDAR_DESCRIPTION: 'Test calendar for unit tests'
+    CALENDAR_DESCRIPTION: 'Test calendar for unit tests',
   };
 
   const mockEvents: CalendarEvent[] = [
@@ -32,7 +32,7 @@ describe('Calendar Generation', () => {
       organizer: 'waste@municipality.dk',
       attendees: ['user@example.com'],
       created: new Date('2025-01-01T00:00:00'),
-      modified: new Date('2025-01-01T00:00:00')
+      modified: new Date('2025-01-01T00:00:00'),
     },
     {
       id: 'event-2',
@@ -44,8 +44,8 @@ describe('Calendar Generation', () => {
       organizer: 'manager@company.com',
       attendees: ['team@company.com'],
       created: new Date('2025-01-01T00:00:00'),
-      modified: new Date('2025-01-01T00:00:00')
-    }
+      modified: new Date('2025-01-01T00:00:00'),
+    },
   ];
 
   describe('generateICalendar', () => {
@@ -100,7 +100,7 @@ describe('Calendar Generation', () => {
       const eventWithSpecialChars: CalendarEvent = {
         ...mockEvents[0],
         title: 'Event with; special, characters\nand newlines',
-        description: 'Description with\nlinebreaks and; semicolons, commas'
+        description: 'Description with\nlinebreaks and; semicolons, commas',
       };
 
       vi.mocked(getAllEvents).mockResolvedValue([eventWithSpecialChars]);
@@ -108,7 +108,9 @@ describe('Calendar Generation', () => {
       const icalContent = await generateICalendar(mockEnv);
 
       expect(icalContent).toContain('SUMMARY:Event with\\; special\\, characters\\nand newlines');
-      expect(icalContent).toContain('DESCRIPTION:Description with\\nlinebreaks and\\; semicolons\\, commas');
+      expect(icalContent).toContain(
+        'DESCRIPTION:Description with\\nlinebreaks and\\; semicolons\\, commas'
+      );
     });
 
     it('should include all required iCal fields', async () => {
@@ -141,7 +143,7 @@ describe('Calendar Generation', () => {
         start: new Date('2025-07-07T07:00:00'),
         end: new Date('2025-07-07T08:00:00'),
         created: new Date('2025-01-01T00:00:00'),
-        modified: new Date('2025-01-01T00:00:00')
+        modified: new Date('2025-01-01T00:00:00'),
         // No description, location, organizer, attendees
       };
 
@@ -170,20 +172,29 @@ END:VCALENDAR`;
       const response = generateCalendarResponse(sampleICalContent);
 
       expect(response.headers.get('Content-Type')).toBe('text/calendar; charset=utf-8');
-      expect(response.headers.get('Content-Disposition')).toBe('attachment; filename="calendar.ics"');
+      expect(response.headers.get('Content-Disposition')).toBe(
+        'attachment; filename="calendar.ics"'
+      );
       expect(response.headers.get('Cache-Control')).toBe('no-cache, no-store, must-revalidate');
     });
 
     it('should generate response with address-specific filename', () => {
       const response = generateCalendarResponse(sampleICalContent, 'Nøddeskellet 8, 2730 Herlev');
 
-      expect(response.headers.get('Content-Disposition')).toBe('attachment; filename="calendar-N_ddeskellet_8__2730_Herlev.ics"');
+      expect(response.headers.get('Content-Disposition')).toBe(
+        'attachment; filename="calendar-N_ddeskellet_8__2730_Herlev.ics"'
+      );
     });
 
     it('should sanitize special characters in filename', () => {
-      const response = generateCalendarResponse(sampleICalContent, 'Test/Address\\With:Special*Characters?');
+      const response = generateCalendarResponse(
+        sampleICalContent,
+        'Test/Address\\With:Special*Characters?'
+      );
 
-      expect(response.headers.get('Content-Disposition')).toBe('attachment; filename="calendar-Test_Address_With_Special_Characters_.ics"');
+      expect(response.headers.get('Content-Disposition')).toBe(
+        'attachment; filename="calendar-Test_Address_With_Special_Characters_.ics"'
+      );
     });
 
     it('should include correct headers for calendar download', () => {

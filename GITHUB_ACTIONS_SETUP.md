@@ -12,10 +12,11 @@ Triggers on:
 
 Steps:
 1. **Type Check** - Validates TypeScript types
-2. **Lint** - ESLint code quality checks
-3. **Test** - Runs Vitest test suite
-4. **Build** - Compiles TypeScript
-5. **Coverage Upload** - Uploads test coverage artifacts
+2. **Format Check** - Prettier code formatting validation
+3. **Lint** - ESLint code quality checks (flat config)
+4. **Test** - Runs Vitest test suite
+5. **Build** - Compiles TypeScript
+6. **Coverage Upload** - Uploads test coverage artifacts
 
 ## 🚀 Deployment Pipeline (Main Branch)
 
@@ -26,7 +27,7 @@ Triggers on:
 - Manual workflow dispatch
 
 Steps:
-1. Runs all CI checks (type-check, lint, test, build)
+1. Runs all CI checks (type-check, format-check, lint, test, build)
 2. Deploys to Cloudflare Workers production environment
 3. Notifies deployment status
 
@@ -75,6 +76,8 @@ CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
 - [ ] Update `wrangler.toml` with your actual database IDs
 - [ ] Set up Cloudflare secrets in GitHub
 - [ ] Update email destination in `wrangler.toml`
+- [ ] Remove the old `.eslintrc.js` file (replaced by `eslint.config.js`)
+- [ ] Run `npm run check` to verify all tools work correctly
 - [ ] Test the pipeline with a pull request
 - [ ] Verify deployment works manually
 
@@ -93,8 +96,20 @@ npm run test
 # Run linting
 npm run lint
 
+# Fix linting issues
+npm run lint:fix
+
+# Check code formatting
+npm run format:check
+
+# Format code
+npm run format
+
 # Type check
 npm run type-check
+
+# Run all checks (type-check + lint + format)
+npm run check
 
 # Build for production
 npm run build
@@ -140,6 +155,27 @@ New endpoints:
 - `/docs` - Interactive API documentation (Swagger UI)
 - `/openapi.json` - OpenAPI schema
 
+## 🎨 Code Quality & Formatting
+
+The project uses modern tooling for code quality:
+
+### ESLint (Flat Config)
+- **Configuration**: `eslint.config.js` (new flat config format)
+- **Features**: TypeScript support, Prettier integration
+- **Rules**: Strict TypeScript rules with sensible defaults
+
+### Prettier
+- **Configuration**: `.prettierrc`
+- **Features**: Automatic code formatting
+- **Integration**: ESLint reports formatting issues as errors
+
+### Pre-commit Checks
+All workflows check:
+1. TypeScript compilation
+2. Code formatting (Prettier)
+3. Linting rules (ESLint)
+4. Test coverage
+
 ## 🚨 Troubleshooting
 
 ### Deployment fails
@@ -155,4 +191,10 @@ New endpoints:
 ### Linting errors
 - Run locally: `npm run lint`
 - Auto-fix: `npm run lint:fix`
-- Check ESLint configuration in `.eslintrc.js`
+- Check ESLint configuration in `eslint.config.js`
+
+### Formatting errors
+- Run locally: `npm run format:check`
+- Auto-fix: `npm run format`
+- Check Prettier configuration in `.prettierrc`
+- Run all checks: `npm run check`

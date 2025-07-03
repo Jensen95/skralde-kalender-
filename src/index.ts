@@ -9,18 +9,24 @@ import { EmailEventParser, parseEmailMessage } from './email';
 import { storeEvent, getAllEvents, deleteEvent, initializeDatabase } from './database';
 
 // Create new Hono app
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono();
 
 // Add CORS middleware
-app.use('*', cors({
-  origin: '*',
-  allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type'],
-}));
+app.use(
+  '*',
+  cors({
+    origin: '*',
+    allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type'],
+  })
+);
 
 // Initialize database middleware
 app.use('*', async (c, next) => {
-  await initializeDatabase(c.env.DB);
+  const env = c.env as unknown as Env;
+  if (env?.DB) {
+    await initializeDatabase(env.DB);
+  }
   await next();
 });
 
@@ -46,26 +52,26 @@ const openapi = fromHono(app, {
 // Calendar routes
 openapi.get('/calendar', async (c) => {
   const address = c.req.query('address');
-  const icalContent = await generateICalendar(c.env, address);
+  const icalContent = await generateICalendar(c.env as unknown as Env, address);
   return generateCalendarResponse(icalContent, address);
 });
 
 openapi.get('/calendar.ics', async (c) => {
   const address = c.req.query('address');
-  const icalContent = await generateICalendar(c.env, address);
+  const icalContent = await generateICalendar(c.env as unknown as Env, address);
   return generateCalendarResponse(icalContent, address);
 });
 
 openapi.get('/calendar/:address.ics', async (c) => {
   const address = decodeURIComponent(c.req.param('address'));
-  const icalContent = await generateICalendar(c.env, address);
+  const icalContent = await generateICalendar(c.env as unknown as Env, address);
   return generateCalendarResponse(icalContent, address);
 });
 
 // Events API routes
 openapi.get('/events', async (c) => {
   try {
-    const events = await getAllEvents(c.env.DB);
+    const events = await getAllEvents((c.env as unknown as Env).DB);
     return c.json(events);
   } catch (error) {
     console.error('Get events error:', error);
@@ -76,13 +82,13 @@ openapi.get('/events', async (c) => {
 openapi.delete('/events', async (c) => {
   try {
     const eventId = c.req.query('id');
-    
+
     if (!eventId) {
       return c.json({ error: 'Event ID required' }, 400);
     }
-    
-    const success = await deleteEvent(c.env.DB, eventId);
-    
+
+    const success = await deleteEvent((c.env as unknown as Env).DB, eventId);
+
     if (success) {
       return c.json({ success: true });
     } else {
@@ -183,28 +189,27 @@ openapi.get('/', (c) => {
 // Export the Hono app
 export default {
   fetch: app.fetch,
-  
+
   async email(message: ForwardableEmailMessage, env: Env, _ctx: ExecutionContext): Promise<void> {
     try {
       console.log('Processing email:', message.headers.get('subject'));
-      
+
       // Parse the email message
       const emailMessage = await parseEmailMessage(message.raw);
-      
+
       // Extract events from the email
       const parser = new EmailEventParser();
       const events = await parser.extractEvents(emailMessage);
-      
+
       console.log(`Extracted ${events.length} events from email`);
-      
+
       // Store the events
       for (const event of events) {
         await storeEvent(env.DB, event);
         console.log(`Stored event: ${event.title} at ${event.start}`);
       }
-      
     } catch (error) {
       console.error('Email processing error:', error);
     }
-  }
+  },
 };

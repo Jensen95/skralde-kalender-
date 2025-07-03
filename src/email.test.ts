@@ -6,13 +6,17 @@ describe('EmailEventParser', () => {
   const parser = new EmailEventParser();
 
   // Helper function to create mock email messages
-  const createMockEmail = (subject: string, content: string, from = 'test@example.com'): EmailMessage => ({
+  const createMockEmail = (
+    subject: string,
+    content: string,
+    from = 'test@example.com'
+  ): EmailMessage => ({
     from,
     to: 'calendar@example.com',
     subject,
     content,
     headers: new Map(),
-    raw: new ArrayBuffer(0)
+    raw: new ArrayBuffer(0),
   });
 
   describe('Danish waste collection emails', () => {
@@ -73,7 +77,7 @@ describe('EmailEventParser', () => {
         { text: 'papir', expected: 'papir', title: 'Papir afhentning' },
         { text: 'restaffald', expected: 'restaffald', title: 'Restaffald afhentning' },
         { text: 'madaffald', expected: 'madaffald', title: 'Madaffald afhentning' },
-        { text: 'genbrugsplast', expected: 'genbrugsplast', title: 'Genbrugsplast afhentning' }
+        { text: 'genbrugsplast', expected: 'genbrugsplast', title: 'Genbrugsplast afhentning' },
       ];
 
       for (const wasteType of wasteTypes) {
@@ -134,10 +138,7 @@ describe('EmailEventParser', () => {
     });
 
     it('should handle ISO date format', async () => {
-      const email = createMockEmail(
-        'Event',
-        'Event on 2025-03-20 14:30'
-      );
+      const email = createMockEmail('Event', 'Event on 2025-03-20 14:30');
 
       const events = await parser.extractEvents(email);
 
@@ -150,10 +151,7 @@ describe('EmailEventParser', () => {
 
   describe('Edge cases', () => {
     it('should handle emails with no dates', async () => {
-      const email = createMockEmail(
-        'No date email',
-        'This email has no date information.'
-      );
+      const email = createMockEmail('No date email', 'This email has no date information.');
 
       const events = await parser.extractEvents(email);
 
@@ -169,10 +167,7 @@ describe('EmailEventParser', () => {
     });
 
     it('should handle malformed Danish dates', async () => {
-      const email = createMockEmail(
-        'Bad date',
-        'Event d.32-13-2025 should not parse.'
-      );
+      const email = createMockEmail('Bad date', 'Event d.32-13-2025 should not parse.');
 
       const events = await parser.extractEvents(email);
 
@@ -180,10 +175,7 @@ describe('EmailEventParser', () => {
     });
 
     it('should clean email subject for title', async () => {
-      const email = createMockEmail(
-        'RE: FW: Meeting Tomorrow',
-        'Meeting d.01-01-2025'
-      );
+      const email = createMockEmail('RE: FW: Meeting Tomorrow', 'Meeting d.01-01-2025');
 
       const events = await parser.extractEvents(email);
 
@@ -194,10 +186,7 @@ describe('EmailEventParser', () => {
 
   describe('Event duration and end times', () => {
     it('should set default 1-hour duration', async () => {
-      const email = createMockEmail(
-        'Event',
-        'Event d.01-01-2025'
-      );
+      const email = createMockEmail('Event', 'Event d.01-01-2025');
 
       const events = await parser.extractEvents(email);
 
@@ -207,10 +196,7 @@ describe('EmailEventParser', () => {
     });
 
     it('should handle events with 07:00 start time', async () => {
-      const email = createMockEmail(
-        'Early event',
-        'Event d.01-01-2025'
-      );
+      const email = createMockEmail('Early event', 'Event d.01-01-2025');
 
       const events = await parser.extractEvents(email);
 

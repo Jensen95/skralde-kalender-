@@ -50,7 +50,7 @@ export interface EmailParser {
 export const EVENT_STATUS = {
   CONFIRMED: 'CONFIRMED',
   TENTATIVE: 'TENTATIVE',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
 } as const;
 
-export type EventStatus = typeof EVENT_STATUS[keyof typeof EVENT_STATUS];
+export type EventStatus = (typeof EVENT_STATUS)[keyof typeof EVENT_STATUS];

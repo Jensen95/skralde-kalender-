@@ -1,29 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { 
-  storeEvent, 
-  getEvent, 
-  getAllEvents, 
+import {
+  storeEvent,
+  getEvent,
+  getAllEvents,
   getEventsByAddress,
   getEventsByType,
   deleteEvent,
   searchEvents,
   generateEventId,
   formatDateForStorage,
-  parseDateFromStorage 
+  parseDateFromStorage,
 } from '../src/database';
 import { CalendarEvent } from '../src/types';
 
 // Mock D1Database
 const mockD1 = {
   prepare: vi.fn(),
-  exec: vi.fn()
+  exec: vi.fn(),
 };
 
 const mockStatement = {
   bind: vi.fn(),
   run: vi.fn(),
   first: vi.fn(),
-  all: vi.fn()
+  all: vi.fn(),
 };
 
 describe('Database Operations', () => {
@@ -43,7 +43,7 @@ describe('Database Operations', () => {
     organizer: 'waste@municipality.dk',
     attendees: ['user@example.com'],
     created: new Date('2025-01-01T00:00:00Z'),
-    modified: new Date('2025-01-01T00:00:00Z')
+    modified: new Date('2025-01-01T00:00:00Z'),
   };
 
   describe('generateEventId', () => {
@@ -101,7 +101,9 @@ describe('Database Operations', () => {
 
       await storeEvent(mockD1 as any, sampleEvent);
 
-      expect(mockD1.prepare).toHaveBeenCalledWith(expect.stringContaining('INSERT OR REPLACE INTO calendar_events'));
+      expect(mockD1.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT OR REPLACE INTO calendar_events')
+      );
       expect(mockStatement.bind).toHaveBeenCalledWith(
         'test-event-1',
         'Storskrald afhentning',
@@ -123,7 +125,7 @@ describe('Database Operations', () => {
       const extendedEvent = {
         ...sampleEvent,
         eventType: 'storskrald',
-        sourceEmail: 'Original email content...'
+        sourceEmail: 'Original email content...',
       };
 
       await storeEvent(mockD1 as any, extendedEvent as any);
@@ -151,7 +153,7 @@ describe('Database Operations', () => {
         start: new Date('2025-07-07T07:00:00Z'),
         end: new Date('2025-07-07T08:00:00Z'),
         created: new Date('2025-01-01T00:00:00Z'),
-        modified: new Date('2025-01-01T00:00:00Z')
+        modified: new Date('2025-01-01T00:00:00Z'),
       };
 
       await storeEvent(mockD1 as any, minimalEvent);
@@ -185,7 +187,7 @@ describe('Database Operations', () => {
         organizer: 'waste@municipality.dk',
         attendees: '["user@example.com"]',
         created_at: '2025-01-01T00:00:00.000Z',
-        modified_at: '2025-01-01T00:00:00.000Z'
+        modified_at: '2025-01-01T00:00:00.000Z',
       };
 
       mockStatement.first.mockResolvedValue(mockRow);
@@ -204,7 +206,7 @@ describe('Database Operations', () => {
         organizer: 'waste@municipality.dk',
         attendees: ['user@example.com'],
         created: new Date('2025-01-01T00:00:00.000Z'),
-        modified: new Date('2025-01-01T00:00:00.000Z')
+        modified: new Date('2025-01-01T00:00:00.000Z'),
       });
     });
 
@@ -227,7 +229,7 @@ describe('Database Operations', () => {
         organizer: null,
         attendees: null,
         created_at: '2025-01-01T00:00:00.000Z',
-        modified_at: '2025-01-01T00:00:00.000Z'
+        modified_at: '2025-01-01T00:00:00.000Z',
       };
 
       mockStatement.first.mockResolvedValue(mockRow);
@@ -251,7 +253,7 @@ describe('Database Operations', () => {
             start_date: '2025-07-07T07:00:00.000Z',
             end_date: '2025-07-07T08:00:00.000Z',
             created_at: '2025-01-01T00:00:00.000Z',
-            modified_at: '2025-01-01T00:00:00.000Z'
+            modified_at: '2025-01-01T00:00:00.000Z',
           },
           {
             id: 'event-2',
@@ -259,16 +261,18 @@ describe('Database Operations', () => {
             start_date: '2025-07-08T07:00:00.000Z',
             end_date: '2025-07-08T08:00:00.000Z',
             created_at: '2025-01-01T00:00:00.000Z',
-            modified_at: '2025-01-01T00:00:00.000Z'
-          }
-        ]
+            modified_at: '2025-01-01T00:00:00.000Z',
+          },
+        ],
       };
 
       mockStatement.all.mockResolvedValue(mockResults);
 
       const events = await getAllEvents(mockD1 as any);
 
-      expect(mockD1.prepare).toHaveBeenCalledWith('SELECT * FROM calendar_events ORDER BY start_date ASC');
+      expect(mockD1.prepare).toHaveBeenCalledWith(
+        'SELECT * FROM calendar_events ORDER BY start_date ASC'
+      );
       expect(events).toHaveLength(2);
       expect(events[0].title).toBe('First Event');
       expect(events[1].title).toBe('Second Event');
@@ -286,9 +290,9 @@ describe('Database Operations', () => {
             start_date: '2025-07-07T07:00:00.000Z',
             end_date: '2025-07-07T08:00:00.000Z',
             created_at: '2025-01-01T00:00:00.000Z',
-            modified_at: '2025-01-01T00:00:00.000Z'
-          }
-        ]
+            modified_at: '2025-01-01T00:00:00.000Z',
+          },
+        ],
       };
 
       mockStatement.all.mockResolvedValue(mockResults);
@@ -313,9 +317,9 @@ describe('Database Operations', () => {
             start_date: '2025-07-07T07:00:00.000Z',
             end_date: '2025-07-07T08:00:00.000Z',
             created_at: '2025-01-01T00:00:00.000Z',
-            modified_at: '2025-01-01T00:00:00.000Z'
-          }
-        ]
+            modified_at: '2025-01-01T00:00:00.000Z',
+          },
+        ],
       };
 
       mockStatement.all.mockResolvedValue(mockResults);
@@ -360,17 +364,23 @@ describe('Database Operations', () => {
             start_date: '2025-07-07T07:00:00.000Z',
             end_date: '2025-07-07T08:00:00.000Z',
             created_at: '2025-01-01T00:00:00.000Z',
-            modified_at: '2025-01-01T00:00:00.000Z'
-          }
-        ]
+            modified_at: '2025-01-01T00:00:00.000Z',
+          },
+        ],
       };
 
       mockStatement.all.mockResolvedValue(mockResults);
 
       const events = await searchEvents(mockD1 as any, 'storskrald');
 
-      expect(mockD1.prepare).toHaveBeenCalledWith(expect.stringContaining('title LIKE ? OR description LIKE ? OR location LIKE ?'));
-      expect(mockStatement.bind).toHaveBeenCalledWith('%storskrald%', '%storskrald%', '%storskrald%');
+      expect(mockD1.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('title LIKE ? OR description LIKE ? OR location LIKE ?')
+      );
+      expect(mockStatement.bind).toHaveBeenCalledWith(
+        '%storskrald%',
+        '%storskrald%',
+        '%storskrald%'
+      );
       expect(events).toHaveLength(1);
     });
   });

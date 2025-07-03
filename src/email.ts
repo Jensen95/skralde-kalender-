@@ -1,14 +1,14 @@
 import PostalMime from 'postal-mime';
-import { CalendarEvent, EmailMessage, EmailParser, ParsedEmailDate } from './types';
+import { CalendarEvent, EmailMessage, EmailParser } from './types';
 import { generateEventId } from './database';
 
 export class EmailEventParser implements EmailParser {
   async extractEvents(email: EmailMessage): Promise<CalendarEvent[]> {
     const events: CalendarEvent[] = [];
-    
+
     // Parse the email content to look for date/time patterns and event information
     const eventInfo = this.extractEventInfo(email.subject, email.content);
-    
+
     if (eventInfo.length > 0) {
       for (const info of eventInfo) {
         const event: CalendarEvent = {
@@ -21,21 +21,25 @@ export class EmailEventParser implements EmailParser {
           organizer: email.from,
           attendees: [email.to],
           created: new Date(),
-          modified: new Date()
+          modified: new Date(),
         };
-        
+
         // Add extended properties for database storage
-        (event as any).eventType = info.eventType;
-        (event as any).sourceEmail = `${email.subject}\n\n${email.content.substring(0, 500)}`;
-        
+        (event as unknown as { eventType: string }).eventType = info.eventType;
+        (event as unknown as { sourceEmail: string }).sourceEmail =
+          `${email.subject}\n\n${email.content.substring(0, 500)}`;
+
         events.push(event);
       }
     }
-    
+
     return events;
   }
 
-  private extractEventInfo(subject: string, content: string): Array<{
+  private extractEventInfo(
+    subject: string,
+    content: string
+  ): Array<{
     title: string;
     description: string;
     start: Date;
@@ -63,59 +67,59 @@ export class EmailEventParser implements EmailParser {
       // Match patterns like "2024-01-15 15:00" or "01/15/2024 3:00 PM"
       /\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}|\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?/gi,
       // Match patterns like "Monday, January 15th at 3 PM"
-      /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?/gi
+      /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?/gi,
     ];
 
     const fullText = `${subject} ${content}`;
-    
-                 // Extract dates from the text
-       const foundDates: Date[] = [];
-       const processedMatches = new Set<string>(); // Prevent duplicates
-       
-               for (const pattern of datePatterns) {
-         const matches = fullText.match(pattern);
-         if (matches) {
-           for (const match of matches) {
-             // Skip if we've already processed this match
-             if (processedMatches.has(match)) {
-               continue;
-             }
-             processedMatches.add(match);
-             
-             const date = this.parseDate(match);
-             if (date) {
-               // Check if we already have this date (prevent duplicates)
-               const dateKey = date.toISOString();
-               if (!foundDates.some(existing => existing.toISOString() === dateKey)) {
-                 foundDates.push(date);
-               }
-             }
-           }
-         }
-       }
+
+    // Extract dates from the text
+    const foundDates: Date[] = [];
+    const processedMatches = new Set<string>(); // Prevent duplicates
+
+    for (const pattern of datePatterns) {
+      const matches = fullText.match(pattern);
+      if (matches) {
+        for (const match of matches) {
+          // Skip if we've already processed this match
+          if (processedMatches.has(match)) {
+            continue;
+          }
+          processedMatches.add(match);
+
+          const date = this.parseDate(match);
+          if (date) {
+            // Check if we already have this date (prevent duplicates)
+            const dateKey = date.toISOString();
+            if (!foundDates.some((existing) => existing.toISOString() === dateKey)) {
+              foundDates.push(date);
+            }
+          }
+        }
+      }
+    }
 
     // If we found dates, create events
     if (foundDates.length > 0) {
-              // Extract event type and create appropriate title
-        const eventType = this.extractWasteCollectionType(fullText);
-        const title = this.createEventTitle(subject, eventType);
-        
-        // Look for location keywords (including Danish addresses)
-        const location = this.extractLocation(fullText);
-      
-              for (const startDate of foundDates) {
-          // Default duration is 1 hour
-          const endDate = new Date(startDate.getTime() + (60 * 60 * 1000));
-          
-          events.push({
-            title,
-            description: this.truncateText(content, 200),
-            start: startDate,
-            end: endDate,
-            location,
-            eventType
-          });
-        }
+      // Extract event type and create appropriate title
+      const eventType = this.extractWasteCollectionType(fullText);
+      const title = this.createEventTitle(subject, eventType);
+
+      // Look for location keywords (including Danish addresses)
+      const location = this.extractLocation(fullText);
+
+      for (const startDate of foundDates) {
+        // Default duration is 1 hour
+        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+
+        events.push({
+          title,
+          description: this.truncateText(content, 200),
+          start: startDate,
+          end: endDate,
+          location,
+          eventType,
+        });
+      }
     }
 
     return events;
@@ -133,17 +137,17 @@ export class EmailEventParser implements EmailParser {
           return date;
         }
       }
-      
+
       // Handle English date formats with "at" - convert to standard format
-      let normalizedDate = dateString
-        .replace(/\s+at\s+/i, ' ')  // Remove "at"
+      const normalizedDate = dateString
+        .replace(/\s+at\s+/i, ' ') // Remove "at"
         .replace(/(\d{1,2}):(\d{2})\s*(AM|PM)/i, (match, hours, minutes, ampm) => {
           let hour = parseInt(hours);
           if (ampm.toUpperCase() === 'PM' && hour !== 12) hour += 12;
           if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
           return `${hour.toString().padStart(2, '0')}:${minutes}:00`;
         });
-      
+
       // Try to parse the normalized date string
       const date = new Date(normalizedDate);
       if (isNaN(date.getTime())) {
@@ -157,12 +161,12 @@ export class EmailEventParser implements EmailParser {
 
   private extractWasteCollectionType(text: string): string {
     const wasteTypes = {
-      'storskrald': 'storskrald',
+      storskrald: 'storskrald',
       'glas/metal': 'glas_metal',
-      'papir': 'papir',
-      'restaffald': 'restaffald',
-      'madaffald': 'madaffald',
-      'genbrugsplast': 'genbrugsplast'
+      papir: 'papir',
+      restaffald: 'restaffald',
+      madaffald: 'madaffald',
+      genbrugsplast: 'genbrugsplast',
     };
 
     for (const [pattern, type] of Object.entries(wasteTypes)) {
@@ -176,16 +180,18 @@ export class EmailEventParser implements EmailParser {
 
   private createEventTitle(subject: string, eventType: string): string {
     const wasteTypeNames = {
-      'storskrald': 'Storskrald afhentning',
-      'glas_metal': 'Glas/metal afhentning',
-      'papir': 'Papir afhentning',
-      'restaffald': 'Restaffald afhentning',
-      'madaffald': 'Madaffald afhentning',
-      'genbrugsplast': 'Genbrugsplast afhentning',
-      'general': this.cleanEventTitle(subject)
+      storskrald: 'Storskrald afhentning',
+      glas_metal: 'Glas/metal afhentning',
+      papir: 'Papir afhentning',
+      restaffald: 'Restaffald afhentning',
+      madaffald: 'Madaffald afhentning',
+      genbrugsplast: 'Genbrugsplast afhentning',
+      general: this.cleanEventTitle(subject),
     };
 
-    return wasteTypeNames[eventType as keyof typeof wasteTypeNames] || this.cleanEventTitle(subject);
+    return (
+      wasteTypeNames[eventType as keyof typeof wasteTypeNames] || this.cleanEventTitle(subject)
+    );
   }
 
   private cleanEventTitle(subject: string): string {
@@ -212,7 +218,7 @@ export class EmailEventParser implements EmailParser {
     const locationPatterns = [
       /(?:at|@)\s+([^,\n.]+(?:room|office|building|street|avenue|drive|road|conference|zoom|teams|meet))/gi,
       /location:\s*([^\n,]+)/gi,
-      /where:\s*([^\n,]+)/gi
+      /where:\s*([^\n,]+)/gi,
     ];
 
     for (const pattern of locationPatterns) {
@@ -236,7 +242,7 @@ export class EmailEventParser implements EmailParser {
 export async function parseEmailMessage(raw: ReadableStream<Uint8Array>): Promise<EmailMessage> {
   // PostalMime can handle ReadableStream directly in Cloudflare Workers
   const parsed = await PostalMime.parse(raw);
-  
+
   // Convert headers to Map<string, string>
   const headers = new Map<string, string>();
   if (parsed.headers) {
@@ -251,6 +257,6 @@ export async function parseEmailMessage(raw: ReadableStream<Uint8Array>): Promis
     subject: parsed.subject || '',
     content: parsed.text || parsed.html || '',
     headers,
-    raw: new ArrayBuffer(0) // We don't need to store the raw data
+    raw: new ArrayBuffer(0), // We don't need to store the raw data
   };
 }

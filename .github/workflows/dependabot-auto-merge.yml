@@ -17,7 +17,7 @@ jobs:
         id: metadata
         uses: dependabot/fetch-metadata@v1
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
 
       - name: Auto-approve minor and patch updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
@@ -44,12 +44,12 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const { number } = context.issue;
-            
+
             // Wait for checks to complete
             let checks;
             let attempts = 0;
             const maxAttempts = 30;
-            
+
             do {
               attempts++;
               await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
@@ -82,7 +82,7 @@ jobs:
               
               console.log(`Waiting for checks... (${attempts}/${maxAttempts})`);
             } while (attempts < maxAttempts);
-            
+
             if (attempts >= maxAttempts) {
               console.log('Timeout waiting for checks');
               process.exit(1);
