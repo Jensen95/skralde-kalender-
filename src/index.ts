@@ -1,153 +1,101 @@
 /// <reference types="@cloudflare/workers-types" />
 
+import { fromHono } from 'chanfana';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { Env } from './types';
 import { generateICalendar, generateCalendarResponse } from './calendar';
 import { EmailEventParser, parseEmailMessage } from './email';
 import { storeEvent, getAllEvents, deleteEvent, initializeDatabase } from './database';
 
-export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const url = new URL(request.url);
-    
-    // Initialize database on first request
-    await initializeDatabase(env.DB);
-    
-    // Handle CORS preflight requests
-    if (request.method === 'OPTIONS') {
-      return handleCORS();
-    }
+// Create new Hono app
+const app = new Hono<{ Bindings: Env }>();
 
-    try {
-      // Handle calendar requests (including address-specific ones)
-      if (url.pathname === '/calendar' || 
-          url.pathname === '/calendar.ics' || 
-          url.pathname.match(/^\/calendar\/.+\.ics$/)) {
-        return await handleCalendarRequest(request, env);
-      }
-      
-      switch (url.pathname) {
-        case '/events':
-          return await handleEventsRequest(request, env);
-        
-        case '/':
-          return handleRootRequest();
-        
-        default:
-          return new Response('Not found', { status: 404 });
-      }
-    } catch (error) {
-      console.error('Worker error:', error);
-      return new Response('Internal server error', { status: 500 });
-    }
+// Add CORS middleware
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type'],
+}));
+
+// Initialize database middleware
+app.use('*', async (c, next) => {
+  await initializeDatabase(c.env.DB);
+  await next();
+});
+
+// Create the chanfana router
+const openapi = fromHono(app, {
+  docs_url: '/docs',
+  openapi_url: '/openapi.json',
+  schema: {
+    info: {
+      title: 'Ice Calendar Worker API',
+      version: '1.0.0',
+      description: 'Cloudflare Worker for email-to-calendar conversion with OpenAPI documentation',
+    },
+    servers: [
+      {
+        url: 'https://your-worker.your-subdomain.workers.dev',
+        description: 'Production server',
+      },
+    ],
   },
+});
 
-  async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext): Promise<void> {
-    try {
-      console.log('Processing email:', message.headers.get('subject'));
-      
-      // Parse the email message
-      const emailMessage = await parseEmailMessage(message.raw);
-      
-      // Extract events from the email
-      const parser = new EmailEventParser();
-      const events = await parser.extractEvents(emailMessage);
-      
-      console.log(`Extracted ${events.length} events from email`);
-      
-      // Store the events
-      for (const event of events) {
-        await storeEvent(env.DB, event);
-        console.log(`Stored event: ${event.title} at ${event.start}`);
-      }
-      
-    } catch (error) {
-      console.error('Email processing error:', error);
-    }
-  }
-};
+// Calendar routes
+openapi.get('/calendar', async (c) => {
+  const address = c.req.query('address');
+  const icalContent = await generateICalendar(c.env, address);
+  return generateCalendarResponse(icalContent, address);
+});
 
-async function handleCalendarRequest(request: Request, env: Env): Promise<Response> {
+openapi.get('/calendar.ics', async (c) => {
+  const address = c.req.query('address');
+  const icalContent = await generateICalendar(c.env, address);
+  return generateCalendarResponse(icalContent, address);
+});
+
+openapi.get('/calendar/:address.ics', async (c) => {
+  const address = decodeURIComponent(c.req.param('address'));
+  const icalContent = await generateICalendar(c.env, address);
+  return generateCalendarResponse(icalContent, address);
+});
+
+// Events API routes
+openapi.get('/events', async (c) => {
   try {
-    const url = new URL(request.url);
-    
-    // Check for address in query parameter
-    const addressParam = url.searchParams.get('address');
-    
-    // Check for address in path: /calendar/ADDRESS.ics
-    let addressFromPath: string | undefined;
-    const pathMatch = url.pathname.match(/^\/calendar\/(.+)\.ics$/);
-    if (pathMatch) {
-      addressFromPath = decodeURIComponent(pathMatch[1]);
-    }
-    
-    const address = addressParam || addressFromPath;
-    
-    const icalContent = await generateICalendar(env, address);
-    return generateCalendarResponse(icalContent, address);
-  } catch (error) {
-    console.error('Calendar generation error:', error);
-    return new Response('Error generating calendar', { status: 500 });
-  }
-}
-
-async function handleEventsRequest(request: Request, env: Env): Promise<Response> {
-  const method = request.method;
-  
-  switch (method) {
-    case 'GET':
-      return await handleGetEvents(env);
-    
-    case 'DELETE':
-      return await handleDeleteEvent(request, env);
-    
-    default:
-      return new Response('Method not allowed', { status: 405 });
-  }
-}
-
-async function handleGetEvents(env: Env): Promise<Response> {
-  try {
-    const events = await getAllEvents(env.DB);
-    return new Response(JSON.stringify(events, null, 2), {
-      headers: {
-        'Content-Type': 'application/json',
-        ...getCORSHeaders()
-      }
-    });
+    const events = await getAllEvents(c.env.DB);
+    return c.json(events);
   } catch (error) {
     console.error('Get events error:', error);
-    return new Response('Error fetching events', { status: 500 });
+    return c.json({ error: 'Error fetching events' }, 500);
   }
-}
+});
 
-async function handleDeleteEvent(request: Request, env: Env): Promise<Response> {
+openapi.delete('/events', async (c) => {
   try {
-    const url = new URL(request.url);
-    const eventId = url.searchParams.get('id');
+    const eventId = c.req.query('id');
     
     if (!eventId) {
-      return new Response('Event ID required', { status: 400 });
+      return c.json({ error: 'Event ID required' }, 400);
     }
     
-    const success = await deleteEvent(env.DB, eventId);
+    const success = await deleteEvent(c.env.DB, eventId);
     
     if (success) {
-      return new Response(JSON.stringify({ success: true }), {
-        headers: {
-          'Content-Type': 'application/json',
-          ...getCORSHeaders()
-        }
-      });
+      return c.json({ success: true });
     } else {
-      return new Response('Event not found', { status: 404 });
+      return c.json({ error: 'Event not found' }, 404);
     }
   } catch (error) {
     console.error('Delete event error:', error);
-    return new Response('Error deleting event', { status: 500 });
+    return c.json({ error: 'Error deleting event' }, 500);
   }
-}
+});
 
-function handleRootRequest(): Response {
+// Root route
+openapi.get('/', (c) => {
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -202,7 +150,7 @@ function handleRootRequest(): Response {
     <div class="card">
         <h2>📅 Calendar Access</h2>
         <p>Subscribe to your calendar using this URL:</p>
-        <div class="endpoint">${new URL('/calendar.ics', 'https://your-worker.your-subdomain.workers.dev')}</div>
+        <div class="endpoint">${c.req.url}/calendar.ics</div>
         <a href="/calendar.ics" class="button">Download Calendar</a>
     </div>
     
@@ -213,7 +161,15 @@ function handleRootRequest(): Response {
     </div>
     
     <div class="card">
-        <h2>🔧 API Endpoints</h2>
+        <h2>🔧 API Documentation</h2>
+        <p>Explore the API endpoints with interactive documentation:</p>
+        <a href="/docs" class="button">View API Docs</a>
+        <div class="endpoint">GET /docs - Interactive API documentation</div>
+        <div class="endpoint">GET /openapi.json - OpenAPI schema</div>
+    </div>
+    
+    <div class="card">
+        <h2>📋 API Endpoints</h2>
         <div class="endpoint">GET /calendar.ics - Download iCalendar file</div>
         <div class="endpoint">GET /events - List all events (JSON)</div>
         <div class="endpoint">DELETE /events?id=EVENT_ID - Delete an event</div>
@@ -221,25 +177,34 @@ function handleRootRequest(): Response {
 </body>
 </html>`;
 
-  return new Response(html, {
-    headers: {
-      'Content-Type': 'text/html',
-      ...getCORSHeaders()
+  return c.html(html);
+});
+
+// Export the Hono app
+export default {
+  fetch: app.fetch,
+  
+  async email(message: ForwardableEmailMessage, env: Env, _ctx: ExecutionContext): Promise<void> {
+    try {
+      console.log('Processing email:', message.headers.get('subject'));
+      
+      // Parse the email message
+      const emailMessage = await parseEmailMessage(message.raw);
+      
+      // Extract events from the email
+      const parser = new EmailEventParser();
+      const events = await parser.extractEvents(emailMessage);
+      
+      console.log(`Extracted ${events.length} events from email`);
+      
+      // Store the events
+      for (const event of events) {
+        await storeEvent(env.DB, event);
+        console.log(`Stored event: ${event.title} at ${event.start}`);
+      }
+      
+    } catch (error) {
+      console.error('Email processing error:', error);
     }
-  });
-}
-
-function handleCORS(): Response {
-  return new Response(null, {
-    status: 204,
-    headers: getCORSHeaders()
-  });
-}
-
-function getCORSHeaders(): Record<string, string> {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-}
+  }
+};

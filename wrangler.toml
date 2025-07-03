@@ -17,3 +17,13 @@ CALENDAR_DESCRIPTION = "Calendar populated from email forwards"
 [[email]]
 name = "calendar-email"
 destination_address = "calendar@yourdomain.com"  # Replace with your email
+
+# Production environment configuration
+[env.production]
+name = "ice-calendar-worker-prod"
+vars = { CALENDAR_NAME = "Ice Calendar Production", CALENDAR_DESCRIPTION = "Production calendar service" }
+
+[env.production.d1_databases]
+binding = "DB"
+database_name = "ice-calendar-db-prod"
+database_id = "your-prod-d1-database-id"  # Replace with your production D1 database ID
