@@ -160,14 +160,16 @@ New endpoints:
 The project uses modern tooling for code quality:
 
 ### ESLint (Flat Config)
-- **Configuration**: `eslint.config.js` (new flat config format)
-- **Features**: TypeScript support, Prettier integration
-- **Rules**: Strict TypeScript rules with sensible defaults
+- **Configuration**: `eslint.config.mjs` (ES Module flat config format)
+- **Features**: TypeScript support, Prettier integration, Unicorn rules, import sorting
+- **Rules**: Strict TypeScript rules, modern JavaScript patterns, arrow function enforcement
+- **Plugins**: Unicorn, Simple Import Sort, Import organization
 
 ### Prettier
 - **Configuration**: `.prettierrc`
-- **Features**: Automatic code formatting
+- **Features**: No semicolons, single quotes, package.json sorting
 - **Integration**: ESLint reports formatting issues as errors
+- **Plugins**: Package.json sorting for better dependency management
 
 ### Pre-commit Checks
 All workflows check:
@@ -191,10 +193,18 @@ All workflows check:
 ### Linting errors
 - Run locally: `npm run lint`
 - Auto-fix: `npm run lint:fix`
-- Check ESLint configuration in `eslint.config.js`
+- Check ESLint configuration in `eslint.config.mjs`
+- Common issues: Function declarations need to be converted to arrow functions
 
 ### Formatting errors
 - Run locally: `npm run format:check`
 - Auto-fix: `npm run format`
 - Check Prettier configuration in `.prettierrc`
+- Note: Semicolons are automatically removed
 - Run all checks: `npm run check`
+
+### Import/Modern JavaScript issues
+- ESLint will auto-sort imports with `npm run lint:fix`
+- Use `Number.isNaN` instead of `isNaN`
+- Use `String.slice()` instead of `String.substring()`
+- Prefer template literals over string concatenation

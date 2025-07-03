@@ -1,5 +1,5 @@
 {
-  "semi": true,
+  "semi": false,
   "trailingComma": "es5",
   "singleQuote": true,
   "printWidth": 100,
@@ -9,5 +9,6 @@
   "bracketSameLine": false,
   "arrowParens": "always",
   "endOfLine": "lf",
-  "quoteProps": "as-needed"
+  "quoteProps": "as-needed",
+  "plugins": ["prettier-plugin-packagejson"]
 }

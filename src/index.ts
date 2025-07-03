@@ -1,15 +1,17 @@
 /// <reference types="@cloudflare/workers-types" />
 
-import { fromHono } from 'chanfana';
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { Env } from './types';
-import { generateICalendar, generateCalendarResponse } from './calendar';
-import { EmailEventParser, parseEmailMessage } from './email';
-import { storeEvent, getAllEvents, deleteEvent, initializeDatabase } from './database';
+import { fromHono } from 'chanfana'
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+
+import { generateCalendarResponse, generateICalendar } from './calendar'
+import { deleteEvent, getAllEvents, initializeDatabase, storeEvent } from './database'
+import { EmailEventParser, parseEmailMessage } from './email'
+
+import type { Env } from './types'
 
 // Create new Hono app
-const app = new Hono();
+const app = new Hono()
 
 // Add CORS middleware
 app.use(
@@ -19,16 +21,16 @@ app.use(
     allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type'],
   })
-);
+)
 
 // Initialize database middleware
 app.use('*', async (c, next) => {
-  const env = c.env as unknown as Env;
+  const env = c.env as unknown as Env
   if (env?.DB) {
-    await initializeDatabase(env.DB);
+    await initializeDatabase(env.DB)
   }
-  await next();
-});
+  await next()
+})
 
 // Create the chanfana router
 const openapi = fromHono(app, {
@@ -47,58 +49,54 @@ const openapi = fromHono(app, {
       },
     ],
   },
-});
+})
 
 // Calendar routes
 openapi.get('/calendar', async (c) => {
-  const address = c.req.query('address');
-  const icalContent = await generateICalendar(c.env as unknown as Env, address);
-  return generateCalendarResponse(icalContent, address);
-});
+  const address = c.req.query('address')
+  const icalContent = await generateICalendar(c.env as unknown as Env, address)
+  return generateCalendarResponse(icalContent, address)
+})
 
 openapi.get('/calendar.ics', async (c) => {
-  const address = c.req.query('address');
-  const icalContent = await generateICalendar(c.env as unknown as Env, address);
-  return generateCalendarResponse(icalContent, address);
-});
+  const address = c.req.query('address')
+  const icalContent = await generateICalendar(c.env as unknown as Env, address)
+  return generateCalendarResponse(icalContent, address)
+})
 
 openapi.get('/calendar/:address.ics', async (c) => {
-  const address = decodeURIComponent(c.req.param('address'));
-  const icalContent = await generateICalendar(c.env as unknown as Env, address);
-  return generateCalendarResponse(icalContent, address);
-});
+  const address = decodeURIComponent(c.req.param('address'))
+  const icalContent = await generateICalendar(c.env as unknown as Env, address)
+  return generateCalendarResponse(icalContent, address)
+})
 
 // Events API routes
 openapi.get('/events', async (c) => {
   try {
-    const events = await getAllEvents((c.env as unknown as Env).DB);
-    return c.json(events);
+    const events = await getAllEvents((c.env as unknown as Env).DB)
+    return c.json(events)
   } catch (error) {
-    console.error('Get events error:', error);
-    return c.json({ error: 'Error fetching events' }, 500);
+    console.error('Get events error:', error)
+    return c.json({ error: 'Error fetching events' }, 500)
   }
-});
+})
 
 openapi.delete('/events', async (c) => {
   try {
-    const eventId = c.req.query('id');
+    const eventId = c.req.query('id')
 
     if (!eventId) {
-      return c.json({ error: 'Event ID required' }, 400);
+      return c.json({ error: 'Event ID required' }, 400)
     }
 
-    const success = await deleteEvent((c.env as unknown as Env).DB, eventId);
+    const success = await deleteEvent((c.env as unknown as Env).DB, eventId)
 
-    if (success) {
-      return c.json({ success: true });
-    } else {
-      return c.json({ error: 'Event not found' }, 404);
-    }
+    return success ? c.json({ success: true }) : c.json({ error: 'Event not found' }, 404)
   } catch (error) {
-    console.error('Delete event error:', error);
-    return c.json({ error: 'Error deleting event' }, 500);
+    console.error('Delete event error:', error)
+    return c.json({ error: 'Error deleting event' }, 500)
   }
-});
+})
 
 // Root route
 openapi.get('/', (c) => {
@@ -181,10 +179,10 @@ openapi.get('/', (c) => {
         <div class="endpoint">DELETE /events?id=EVENT_ID - Delete an event</div>
     </div>
 </body>
-</html>`;
+</html>`
 
-  return c.html(html);
-});
+  return c.html(html)
+})
 
 // Export the Hono app
 export default {
@@ -192,24 +190,24 @@ export default {
 
   async email(message: ForwardableEmailMessage, env: Env, _ctx: ExecutionContext): Promise<void> {
     try {
-      console.log('Processing email:', message.headers.get('subject'));
+      console.log('Processing email:', message.headers.get('subject'))
 
       // Parse the email message
-      const emailMessage = await parseEmailMessage(message.raw);
+      const emailMessage = await parseEmailMessage(message.raw)
 
       // Extract events from the email
-      const parser = new EmailEventParser();
-      const events = await parser.extractEvents(emailMessage);
+      const parser = new EmailEventParser()
+      const events = await parser.extractEvents(emailMessage)
 
-      console.log(`Extracted ${events.length} events from email`);
+      console.log(`Extracted ${events.length} events from email`)
 
       // Store the events
       for (const event of events) {
-        await storeEvent(env.DB, event);
-        console.log(`Stored event: ${event.title} at ${event.start}`);
+        await storeEvent(env.DB, event)
+        console.log(`Stored event: ${event.title} at ${event.start}`)
       }
     } catch (error) {
-      console.error('Email processing error:', error);
+      console.error('Email processing error:', error)
     }
   },
-};
+}

@@ -1,23 +1,7 @@
 {
   "name": "cloudflare-ice-calendar-worker",
   "version": "1.0.0",
-  "type": "module",
   "description": "Cloudflare Worker that serves iCalendar and processes email forwards",
-  "main": "src/index.ts",
-  "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "build": "tsc",
-    "type-check": "tsc --noEmit",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage",
-    "lint": "eslint . --ext .ts,.js",
-    "lint:fix": "eslint . --ext .ts,.js --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "check": "npm run type-check && npm run lint && npm run format:check"
-  },
   "keywords": [
     "cloudflare",
     "worker",
@@ -25,8 +9,30 @@
     "email",
     "typescript"
   ],
-  "author": "",
   "license": "MIT",
+  "author": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "check": "npm run type-check && npm run lint && npm run format:check",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chanfana": "^2.0.2",
+    "hono": "^3.12.0",
+    "ical-generator": "^4.1.0",
+    "postal-mime": "^2.2.4"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20231218.0",
     "@types/node": "^20.10.0",
@@ -35,17 +41,16 @@
     "@vitest/coverage-v8": "^1.0.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.1.0",
+    "eslint-plugin-simple-import-sort": "^12.0.0",
+    "eslint-plugin-unicorn": "^52.0.0",
+    "globals": "^14.0.0",
     "prettier": "^3.2.0",
+    "prettier-plugin-packagejson": "^2.4.0",
     "typescript": "^5.3.0",
     "typescript-eslint": "^8.0.0",
     "vitest": "^1.0.0",
     "wrangler": "^3.15.0"
-  },
-  "dependencies": {
-    "ical-generator": "^4.1.0",
-    "postal-mime": "^2.2.4",
-    "chanfana": "^2.0.2",
-    "hono": "^3.12.0"
   }
 }
