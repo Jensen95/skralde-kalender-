@@ -76,7 +76,8 @@ CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
 - [ ] Update `wrangler.toml` with your actual database IDs
 - [ ] Set up Cloudflare secrets in GitHub
 - [ ] Update email destination in `wrangler.toml`
-- [ ] Remove the old `.eslintrc.js` file (replaced by `eslint.config.js`)
+- [ ] Remove the old `.eslintrc.js` file (replaced by `eslint.config.mjs`)
+- [ ] Ensure test files are co-located with source files in `src/`
 - [ ] Run `npm run check` to verify all tools work correctly
 - [ ] Test the pipeline with a pull request
 - [ ] Verify deployment works manually
@@ -208,3 +209,9 @@ All workflows check:
 - Use `Number.isNaN` instead of `isNaN`
 - Use `String.slice()` instead of `String.substring()`
 - Prefer template literals over string concatenation
+
+### Test Structure
+- Test files are co-located with source files in `src/` directory
+- Use `test()` for top-level test functions
+- Use `it()` inside `describe()` blocks for better organization
+- Prefer `toStrictEqual()` over `toEqual()` for more precise assertions

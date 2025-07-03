@@ -50,7 +50,7 @@ describe('Calendar Generation', () => {
   ]
 
   describe('generateICalendar', () => {
-    test('should generate calendar with all events', async () => {
+    it('should generate calendar with all events', async () => {
       vi.mocked(getAllEvents).mockResolvedValue(mockEvents)
 
       const icalContent = await generateICalendar(mockEnv)
@@ -65,7 +65,7 @@ describe('Calendar Generation', () => {
       expect(icalContent).toContain('LOCATION:Conference Room A')
     })
 
-    test('should generate address-specific calendar', async () => {
+    it('should generate address-specific calendar', async () => {
       const addressEvents = [mockEvents[0]] // Only the Nøddeskellet event
       vi.mocked(getEventsByAddress).mockResolvedValue(addressEvents)
 
@@ -77,7 +77,7 @@ describe('Calendar Generation', () => {
       expect(icalContent).not.toContain('SUMMARY:Team Meeting')
     })
 
-    test('should handle empty event list', async () => {
+    it('should handle empty event list', async () => {
       vi.mocked(getAllEvents).mockResolvedValue([])
 
       const icalContent = await generateICalendar(mockEnv)
@@ -87,7 +87,7 @@ describe('Calendar Generation', () => {
       expect(icalContent).not.toContain('BEGIN:VEVENT')
     })
 
-    test('should format dates correctly in 24-hour format', async () => {
+    it('should format dates correctly in 24-hour format', async () => {
       vi.mocked(getAllEvents).mockResolvedValue([mockEvents[0]])
 
       const icalContent = await generateICalendar(mockEnv)
@@ -97,7 +97,7 @@ describe('Calendar Generation', () => {
       expect(icalContent).toContain('DTEND:20250707T080000Z')
     })
 
-    test('should escape special characters in text fields', async () => {
+    it('should escape special characters in text fields', async () => {
       const eventWithSpecialChars: CalendarEvent = {
         ...mockEvents[0],
         title: 'Event with; special, characters\nand newlines',
@@ -114,7 +114,7 @@ describe('Calendar Generation', () => {
       )
     })
 
-    test('should include all required iCal fields', async () => {
+    it('should include all required iCal fields', async () => {
       vi.mocked(getAllEvents).mockResolvedValue([mockEvents[0]])
 
       const icalContent = await generateICalendar(mockEnv)
@@ -137,7 +137,7 @@ describe('Calendar Generation', () => {
       expect(icalContent).toContain('STATUS:CONFIRMED')
     })
 
-    test('should handle optional fields correctly', async () => {
+    it('should handle optional fields correctly', async () => {
       const minimalEvent: CalendarEvent = {
         id: 'minimal-event',
         title: 'Minimal Event',
@@ -169,7 +169,7 @@ SUMMARY:Test Event
 END:VEVENT
 END:VCALENDAR`
 
-    test('should generate response with default filename', () => {
+    it('should generate response with default filename', () => {
       const response = generateCalendarResponse(sampleICalContent)
 
       expect(response.headers.get('Content-Type')).toBe('text/calendar; charset=utf-8')
@@ -179,7 +179,7 @@ END:VCALENDAR`
       expect(response.headers.get('Cache-Control')).toBe('no-cache, no-store, must-revalidate')
     })
 
-    test('should generate response with address-specific filename', () => {
+    it('should generate response with address-specific filename', () => {
       const response = generateCalendarResponse(sampleICalContent, 'Nøddeskellet 8, 2730 Herlev')
 
       expect(response.headers.get('Content-Disposition')).toBe(
@@ -187,7 +187,7 @@ END:VCALENDAR`
       )
     })
 
-    test('should sanitize special characters in filename', () => {
+    it('should sanitize special characters in filename', () => {
       const response = generateCalendarResponse(
         sampleICalContent,
         'Test/Address\\With:Special*Characters?'
@@ -198,7 +198,7 @@ END:VCALENDAR`
       )
     })
 
-    test('should include correct headers for calendar download', () => {
+    it('should include correct headers for calendar download', () => {
       const response = generateCalendarResponse(sampleICalContent)
 
       expect(response.headers.get('Pragma')).toBe('no-cache')
@@ -207,7 +207,7 @@ END:VCALENDAR`
   })
 
   describe('Calendar filtering', () => {
-    test('should call getEventsByAddress when address is provided', async () => {
+    it('should call getEventsByAddress when address is provided', async () => {
       const filteredEvents = [mockEvents[0]]
       vi.mocked(getEventsByAddress).mockResolvedValue(filteredEvents)
 
@@ -217,7 +217,7 @@ END:VCALENDAR`
       expect(getAllEvents).not.toHaveBeenCalled()
     })
 
-    test('should call getAllEvents when no address is provided', async () => {
+    it('should call getAllEvents when no address is provided', async () => {
       vi.mocked(getAllEvents).mockResolvedValue(mockEvents)
 
       await generateICalendar(mockEnv)

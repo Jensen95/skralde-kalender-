@@ -77,10 +77,11 @@ Import grouping order:
 
 ### 5. **Vitest Test Enhancement**
 - 🧪 Vitest-specific rules and best practices
-- 🧪 Prefer `test` over `it` for consistency
+- 🧪 Prefer `test` over `it` for top-level tests, `it` inside `describe` blocks
 - 🧪 Use `toStrictEqual` over `toEqual` for better assertions
 - 🧪 Detect disabled/focused tests
 - 🧪 Enforce consistent test patterns
+- 🧪 Co-located test files alongside source code
 
 ### 6. **Cloudflare Workers Optimization**
 - 🌐 Proper global definitions for Workers environment
@@ -187,11 +188,13 @@ const text = `Hello ${name}`
 
 ### Vitest Test Patterns
 ```typescript
-// ❌ Inconsistent test function
-it('should work', () => { })
+// ✅ Top-level tests use 'test'
+test('should work at top level', () => { })
 
-// ✅ Consistent test function
-test('should work', () => { })
+// ✅ Tests inside describe use 'it'
+describe('Feature', () => {
+  it('should work inside describe', () => { })
+})
 
 // ❌ Loose equality
 expect(result).toEqual(expected)

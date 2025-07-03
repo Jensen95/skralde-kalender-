@@ -18,10 +18,11 @@
 - **Comprehensive alphabetical ordering** throughout codebase
 
 #### **🧪 Vitest Integration**
-- **Test consistency** - Enforces `test` over `it`
+- **Test consistency** - Enforces `test` for top-level, `it` inside `describe`
 - **Strict assertions** - Prefers `toStrictEqual` over `toEqual`
 - **Test quality** - Detects disabled/focused tests
 - **Pattern enforcement** - Consistent test structure
+- **Co-located tests** - Test files alongside source code
 
 #### **🦄 Unicorn Plugin**
 - **35+ modern JavaScript rules** manually configured
@@ -52,7 +53,7 @@
 ```json
 {
   "types": ["@cloudflare/workers-types", "node", "vitest/globals"],
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*"],
   "rootDir": "./"
 }
 ```
@@ -94,10 +95,11 @@ The configuration auto-fixes:
 ## 🔧 Environment-Specific Rules
 
 ### **Test Files** (`**/*.test.ts`, `**/*.spec.ts`)
-- Enhanced Vitest rules
-- Relaxed TypeScript rules
-- Disabled object sorting (for test data)
+- Enhanced Vitest rules with smart `test`/`it` usage
+- Relaxed TypeScript rules for testing flexibility
+- Disabled object sorting (for test data readability)
 - Focused test detection
+- Co-located with source files for better organization
 
 ### **Config Files** (`**/*.config.*`)
 - Relaxed module preferences

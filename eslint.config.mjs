@@ -227,7 +227,7 @@ export default tseslint.config(
       'perfectionist/sort-objects': 'off', // Test data can be in logical order
 
       // Vitest specific enhancements
-      'vitest/consistent-test-it': ['error', { fn: 'test' }],
+      'vitest/consistent-test-it': ['error', { fn: 'test', withinDescribe: 'it' }],
       'vitest/no-disabled-tests': 'warn',
       'vitest/no-focused-tests': 'error',
       'vitest/prefer-to-be': 'error',

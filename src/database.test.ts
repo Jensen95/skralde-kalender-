@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, vi } from 'vitest'
 
-import type { CalendarEvent } from '../src/types'
+import type { CalendarEvent } from './types'
 
 import {
   deleteEvent,
@@ -13,7 +13,7 @@ import {
   parseDateFromStorage,
   searchEvents,
   storeEvent,
-} from '../src/database'
+} from './database'
 
 // Mock D1Database
 const mockD1 = {
@@ -49,7 +49,7 @@ describe('Database Operations', () => {
   }
 
   describe('generateEventId', () => {
-    test('should generate unique event IDs', () => {
+    it('should generate unique event IDs', () => {
       const id1 = generateEventId()
       const id2 = generateEventId()
 
@@ -58,7 +58,7 @@ describe('Database Operations', () => {
       expect(id1).not.toBe(id2)
     })
 
-    test('should include timestamp in ID', () => {
+    it('should include timestamp in ID', () => {
       const beforeTime = Date.now()
       const id = generateEventId()
       const afterTime = Date.now()
@@ -70,14 +70,14 @@ describe('Database Operations', () => {
   })
 
   describe('Date formatting', () => {
-    test('should format dates for storage as ISO strings', () => {
+    it('should format dates for storage as ISO strings', () => {
       const date = new Date('2025-07-07T07:00:00Z')
       const formatted = formatDateForStorage(date)
 
       expect(formatted).toBe('2025-07-07T07:00:00.000Z')
     })
 
-    test('should parse dates from storage', () => {
+    it('should parse dates from storage', () => {
       const dateString = '2025-07-07T07:00:00.000Z'
       const parsed = parseDateFromStorage(dateString)
 
@@ -88,7 +88,7 @@ describe('Database Operations', () => {
       expect(parsed.getHours()).toBe(7)
     })
 
-    test('should handle round-trip date conversion', () => {
+    it('should handle round-trip date conversion', () => {
       const originalDate = new Date('2025-07-07T07:00:00Z')
       const formatted = formatDateForStorage(originalDate)
       const parsed = parseDateFromStorage(formatted)
@@ -98,7 +98,7 @@ describe('Database Operations', () => {
   })
 
   describe('storeEvent', () => {
-    test('should prepare correct SQL statement', async () => {
+    it('should prepare correct SQL statement', async () => {
       mockStatement.run.mockResolvedValue({ success: true })
 
       await storeEvent(mockD1 as any, sampleEvent)
@@ -123,7 +123,7 @@ describe('Database Operations', () => {
       expect(mockStatement.run).toHaveBeenCalled()
     })
 
-    test('should handle events with extended properties', async () => {
+    it('should handle events with extended properties', async () => {
       const extendedEvent = {
         ...sampleEvent,
         eventType: 'storskrald',
@@ -148,7 +148,7 @@ describe('Database Operations', () => {
       )
     })
 
-    test('should handle events with null values', async () => {
+    it('should handle events with null values', async () => {
       const minimalEvent: CalendarEvent = {
         id: 'minimal-event',
         title: 'Minimal Event',
@@ -178,7 +178,7 @@ describe('Database Operations', () => {
   })
 
   describe('getEvent', () => {
-    test('should retrieve event by ID', async () => {
+    it('should retrieve event by ID', async () => {
       const mockRow = {
         id: 'test-event-1',
         title: 'Storskrald afhentning',
@@ -212,7 +212,7 @@ describe('Database Operations', () => {
       })
     })
 
-    test('should return null for non-existent event', async () => {
+    it('should return null for non-existent event', async () => {
       mockStatement.first.mockResolvedValue(null)
 
       const event = await getEvent(mockD1 as any, 'non-existent')
@@ -220,7 +220,7 @@ describe('Database Operations', () => {
       expect(event).toBeNull()
     })
 
-    test('should handle events with null optional fields', async () => {
+    it('should handle events with null optional fields', async () => {
       const mockRow = {
         id: 'minimal-event',
         title: 'Minimal Event',
@@ -246,7 +246,7 @@ describe('Database Operations', () => {
   })
 
   describe('getAllEvents', () => {
-    test('should retrieve all events ordered by start date', async () => {
+    it('should retrieve all events ordered by start date', async () => {
       const mockResults = {
         results: [
           {
@@ -282,7 +282,7 @@ describe('Database Operations', () => {
   })
 
   describe('getEventsByAddress', () => {
-    test('should filter events by address using LIKE', async () => {
+    it('should filter events by address using LIKE', async () => {
       const mockResults = {
         results: [
           {
@@ -309,7 +309,7 @@ describe('Database Operations', () => {
   })
 
   describe('getEventsByType', () => {
-    test('should filter events by type', async () => {
+    it('should filter events by type', async () => {
       const mockResults = {
         results: [
           {
@@ -335,7 +335,7 @@ describe('Database Operations', () => {
   })
 
   describe('deleteEvent', () => {
-    test('should delete event and return true if successful', async () => {
+    it('should delete event and return true if successful', async () => {
       mockStatement.run.mockResolvedValue({ meta: { changes: 1 } })
 
       const result = await deleteEvent(mockD1 as any, 'test-event-1')
@@ -345,7 +345,7 @@ describe('Database Operations', () => {
       expect(result).toBe(true)
     })
 
-    test('should return false if no event was deleted', async () => {
+    it('should return false if no event was deleted', async () => {
       mockStatement.run.mockResolvedValue({ meta: { changes: 0 } })
 
       const result = await deleteEvent(mockD1 as any, 'non-existent')
@@ -355,7 +355,7 @@ describe('Database Operations', () => {
   })
 
   describe('searchEvents', () => {
-    test('should search events by title, description, and location', async () => {
+    it('should search events by title, description, and location', async () => {
       const mockResults = {
         results: [
           {
