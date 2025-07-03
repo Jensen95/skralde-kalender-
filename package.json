@@ -1,0 +1,25 @@
+{
+  "name": "cloudflare-ice-calendar-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker that serves iCalendar and processes email forwards",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["cloudflare", "worker", "icalendar", "email", "typescript"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^3.15.0"
+  },
+  "dependencies": {
+    "ical-generator": "^4.1.0",
+    "postal-mime": "^2.2.4"
+  }
+}
