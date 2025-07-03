@@ -2,7 +2,7 @@ import js from '@eslint/js'
 import prettierConfig from 'eslint-config-prettier'
 import importPlugin from 'eslint-plugin-import'
 import prettierPlugin from 'eslint-plugin-prettier'
-import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import perfectionist from 'eslint-plugin-perfectionist'
 import unicorn from 'eslint-plugin-unicorn'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
@@ -47,7 +47,6 @@ export default tseslint.config(
       prettier: prettierPlugin,
       unicorn,
       import: importPlugin,
-      'simple-import-sort': simpleImportSort,
     },
     rules: {
       // Prettier integration
@@ -75,29 +74,7 @@ export default tseslint.config(
       'prefer-arrow-callback': ['error', { allowNamedFunctions: false }],
       'func-style': ['error', 'expression', { allowArrowFunctions: true }],
 
-      // Import sorting
-      'simple-import-sort/imports': [
-        'error',
-        {
-          groups: [
-            // Side effect imports first
-            ['^\\u0000'],
-            // Node.js builtins
-            ['^node:'],
-            // Packages (things that start with a letter/digit/@)
-            ['^@?\\w'],
-            // Internal packages
-            ['^(@|~)(/.*)?$'],
-            // Parent imports (..)
-            ['^\\.\\.(?!/?$)', '^\\.\\./?$'],
-            // Other relative imports (. and ./)
-            ['^\\./(?=.*/)(?!/?$)', '^\\.(?!/?$)', '^\\./?$'],
-            // Type imports (keep them separate)
-            ['^.+\\u0000$'],
-          ],
-        },
-      ],
-      'simple-import-sort/exports': 'error',
+      // Import organization (handled by perfectionist recommended-alphabetical config)
       'import/first': 'error',
       'import/newline-after-import': 'error',
       'import/no-duplicates': 'error',
