@@ -97,9 +97,20 @@ npm run deploy
 
 ## Calendar Subscription
 
+### All Events
 Add this URL to your calendar app:
 ```
 https://your-worker.your-subdomain.workers.dev/calendar.ics
+```
+
+### Address-Specific Events
+Subscribe to events for a specific address:
+```
+https://your-worker.your-subdomain.workers.dev/calendar.ics?address=Nøddeskellet%208
+```
+Or use path-based format:
+```
+https://your-worker.your-subdomain.workers.dev/calendar/Nøddeskellet%208.ics
 ```
 
 **Supported Calendar Apps**:
@@ -120,6 +131,15 @@ npm run type-check
 
 # Build
 npm run build
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
 ## Email Processing Logic
@@ -175,9 +195,18 @@ Dette er en automatisk afsendt e-mail, som ikke kan besvares.
 - `CALENDAR_DESCRIPTION` - Calendar description
 
 ### Storage
-- Uses Cloudflare KV for event storage
-- Events are stored as JSON with UTC timestamps
+- Uses Cloudflare D1 database for event storage
+- Events are stored with SQL schema and indexes
+- Supports advanced querying and filtering
+- Address-specific calendar subscriptions
 - Automatic deduplication by event ID
+
+### Testing
+- Comprehensive test suite with vitest
+- Email parsing tests for Danish and English formats
+- Calendar generation and iCal format tests
+- Database operation tests with mocking
+- 44 test cases covering edge cases
 
 ## Security
 

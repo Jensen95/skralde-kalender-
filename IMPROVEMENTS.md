@@ -58,7 +58,7 @@ CREATE TABLE calendar_events (
 🇩🇰 **Danish Date Formats**
 - `mandag d.07-07-2025` (Monday d.07-07-2025)
 - `d.07-07-2025` (d.07-07-2025)
-- Automatically sets time to 8:00 AM for waste collection
+- Automatically sets time to 07:00 (7:00 AM) for waste collection
 
 🇩🇰 **Danish Address Format**
 - `adressen Nøddeskellet 8, 2730 Herlev`

@@ -18,11 +18,14 @@ export default {
     }
 
     try {
+      // Handle calendar requests (including address-specific ones)
+      if (url.pathname === '/calendar' || 
+          url.pathname === '/calendar.ics' || 
+          url.pathname.match(/^\/calendar\/.+\.ics$/)) {
+        return await handleCalendarRequest(request, env);
+      }
+      
       switch (url.pathname) {
-        case '/calendar':
-        case '/calendar.ics':
-          return await handleCalendarRequest(env);
-        
         case '/events':
           return await handleEventsRequest(request, env);
         
@@ -63,10 +66,24 @@ export default {
   }
 };
 
-async function handleCalendarRequest(env: Env): Promise<Response> {
+async function handleCalendarRequest(request: Request, env: Env): Promise<Response> {
   try {
-    const icalContent = await generateICalendar(env);
-    return generateCalendarResponse(icalContent);
+    const url = new URL(request.url);
+    
+    // Check for address in query parameter
+    const addressParam = url.searchParams.get('address');
+    
+    // Check for address in path: /calendar/ADDRESS.ics
+    let addressFromPath: string | undefined;
+    const pathMatch = url.pathname.match(/^\/calendar\/(.+)\.ics$/);
+    if (pathMatch) {
+      addressFromPath = decodeURIComponent(pathMatch[1]);
+    }
+    
+    const address = addressParam || addressFromPath;
+    
+    const icalContent = await generateICalendar(env, address);
+    return generateCalendarResponse(icalContent, address);
   } catch (error) {
     console.error('Calendar generation error:', error);
     return new Response('Error generating calendar', { status: 500 });

@@ -23,6 +23,11 @@ export class EmailEventParser implements EmailParser {
           created: new Date(),
           modified: new Date()
         };
+        
+        // Add extended properties for database storage
+        (event as any).eventType = info.eventType;
+        (event as any).sourceEmail = `${email.subject}\n\n${email.content.substring(0, 500)}`;
+        
         events.push(event);
       }
     }
@@ -36,6 +41,7 @@ export class EmailEventParser implements EmailParser {
     start: Date;
     end: Date;
     location?: string;
+    eventType: string;
   }> {
     const events: Array<{
       title: string;
@@ -43,42 +49,50 @@ export class EmailEventParser implements EmailParser {
       start: Date;
       end: Date;
       location?: string;
+      eventType: string;
     }> = [];
 
     // Look for Danish waste collection patterns and common date patterns
-    const danishDatePatterns = [
-      // Danish format: "mandag d.07-07-2025" or similar
+    const datePatterns = [
+      // Danish format: "mandag d.07-07-2025" or similar (most specific first)
       /(?:mandag|tirsdag|onsdag|torsdag|fredag|lørdag|søndag)\s+d\.(\d{2}-\d{2}-\d{4})/gi,
-      // Alternative Danish format: "d. 07-07-2025" or "d.07-07-2025"
-      /d\.?\s*(\d{2}-\d{2}-\d{4})/gi,
-    ];
-    
-    const generalDatePatterns = [
-      // Match patterns like "January 15, 2024 at 3:00 PM"
-      /(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)/gi,
+      // Alternative Danish format: "d. 07-07-2025" or "d.07-07-2025" (less specific)
+      /\bd\.?\s*(\d{2}-\d{2}-\d{4})\b/gi,
+      // Match patterns like "January 15, 2024 at 3:00 PM" or "January 15, 2025 at 2:00 PM"
+      /(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}(?:\s+at\s+\d{1,2}:\d{2}\s*(?:AM|PM|am|pm))?/gi,
       // Match patterns like "2024-01-15 15:00" or "01/15/2024 3:00 PM"
       /\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}|\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?/gi,
       // Match patterns like "Monday, January 15th at 3 PM"
       /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?/gi
     ];
-    
-    const allDatePatterns = [...danishDatePatterns, ...generalDatePatterns];
 
     const fullText = `${subject} ${content}`;
     
-          // Extract dates from the text
-      const foundDates: Date[] = [];
-      for (const pattern of allDatePatterns) {
-        const matches = fullText.match(pattern);
-        if (matches) {
-          for (const match of matches) {
-                         const date = this.parseDate(match);
-            if (date) {
-              foundDates.push(date);
-            }
-          }
-        }
-      }
+                 // Extract dates from the text
+       const foundDates: Date[] = [];
+       const processedMatches = new Set<string>(); // Prevent duplicates
+       
+               for (const pattern of datePatterns) {
+         const matches = fullText.match(pattern);
+         if (matches) {
+           for (const match of matches) {
+             // Skip if we've already processed this match
+             if (processedMatches.has(match)) {
+               continue;
+             }
+             processedMatches.add(match);
+             
+             const date = this.parseDate(match);
+             if (date) {
+               // Check if we already have this date (prevent duplicates)
+               const dateKey = date.toISOString();
+               if (!foundDates.some(existing => existing.toISOString() === dateKey)) {
+                 foundDates.push(date);
+               }
+             }
+           }
+         }
+       }
 
     // If we found dates, create events
     if (foundDates.length > 0) {
@@ -93,17 +107,14 @@ export class EmailEventParser implements EmailParser {
           // Default duration is 1 hour
           const endDate = new Date(startDate.getTime() + (60 * 60 * 1000));
           
-          const eventData: any = {
+          events.push({
             title,
             description: this.truncateText(content, 200),
             start: startDate,
             end: endDate,
             location,
-            eventType,
-            sourceEmail: `${subject}\n\n${content.substring(0, 500)}`
-          };
-          
-          events.push(eventData);
+            eventType
+          });
         }
     }
 
@@ -116,15 +127,25 @@ export class EmailEventParser implements EmailParser {
       const danishMatch = dateString.match(/(\d{2}-\d{2}-\d{4})/);
       if (danishMatch) {
         const [day, month, year] = danishMatch[1].split('-');
-        // Default time to 8:00 AM for waste collection
-        const date = new Date(`${year}-${month}-${day}T08:00:00`);
+        // Default time to 07:00 (7:00 AM) for waste collection
+        const date = new Date(`${year}-${month}-${day}T07:00:00`);
         if (!isNaN(date.getTime())) {
           return date;
         }
       }
       
-      // Try to parse the date string normally
-      const date = new Date(dateString);
+      // Handle English date formats with "at" - convert to standard format
+      let normalizedDate = dateString
+        .replace(/\s+at\s+/i, ' ')  // Remove "at"
+        .replace(/(\d{1,2}):(\d{2})\s*(AM|PM)/i, (match, hours, minutes, ampm) => {
+          let hour = parseInt(hours);
+          if (ampm.toUpperCase() === 'PM' && hour !== 12) hour += 12;
+          if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
+          return `${hour.toString().padStart(2, '0')}:${minutes}:00`;
+        });
+      
+      // Try to parse the normalized date string
+      const date = new Date(normalizedDate);
       if (isNaN(date.getTime())) {
         return null;
       }
@@ -168,21 +189,23 @@ export class EmailEventParser implements EmailParser {
   }
 
   private cleanEventTitle(subject: string): string {
-    // Remove common email prefixes
-    return subject
-      .replace(/^(RE:|FW:|FWD:)\s*/i, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // Remove common email prefixes (including RE:, FW:, FWD:) - may be multiple
+    let cleaned = subject;
+    while (/^(RE:|FW:|FWD:)\s*/i.test(cleaned)) {
+      cleaned = cleaned.replace(/^(RE:|FW:|FWD:)\s*/i, '');
+    }
+    return cleaned.replace(/\s+/g, ' ').trim();
   }
 
   private extractLocation(text: string): string | undefined {
     // Look for Danish address patterns first
-    const danishAddressPattern = /adressen\s+([^,\n.]+)/gi;
+    const danishAddressPattern = /adressen\s+([^\n.]+)/gi;
     const danishMatch = text.match(danishAddressPattern);
     if (danishMatch && danishMatch[0]) {
-      // Extract everything after "adressen"
+      // Extract everything after "adressen" until line end
       const addressPart = danishMatch[0].replace(/adressen\s+/gi, '').trim();
-      return addressPart;
+      // Remove any trailing punctuation
+      return addressPart.replace(/\.$/, '');
     }
 
     // Look for common location patterns

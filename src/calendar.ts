@@ -1,17 +1,27 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import { CalendarEvent, Env } from './types';
-import { getAllEvents } from './database';
+import { getAllEvents, getEventsByAddress } from './database';
 
-export async function generateICalendar(env: Env): Promise<string> {
-  const events = await getAllEvents(env.DB);
+export async function generateICalendar(env: Env, address?: string): Promise<string> {
+  const events = address 
+    ? await getEventsByAddress(env.DB, address)
+    : await getAllEvents(env.DB);
+  
+  const calendarName = address 
+    ? `${env.CALENDAR_NAME} - ${address}`
+    : env.CALENDAR_NAME;
+    
+  const calendarDescription = address
+    ? `${env.CALENDAR_DESCRIPTION} for ${address}`
+    : env.CALENDAR_DESCRIPTION;
   
   const calendarLines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Ice Calendar Worker//EN',
-    `X-WR-CALNAME:${env.CALENDAR_NAME}`,
-    `X-WR-CALDESC:${env.CALENDAR_DESCRIPTION}`,
+    `X-WR-CALNAME:${calendarName}`,
+    `X-WR-CALDESC:${calendarDescription}`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH'
   ];
@@ -76,11 +86,15 @@ function escapeText(text: string): string {
     .replace(/\r/g, '\\r');
 }
 
-export function generateCalendarResponse(icalContent: string): Response {
+export function generateCalendarResponse(icalContent: string, address?: string): Response {
+  const filename = address 
+    ? `calendar-${address.replace(/[^a-zA-Z0-9]/g, '_')}.ics`
+    : 'calendar.ics';
+    
   return new Response(icalContent, {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="calendar.ics"',
+      'Content-Disposition': `attachment; filename="${filename}"`,
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0'

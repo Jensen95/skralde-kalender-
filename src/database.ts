@@ -82,6 +82,19 @@ export async function getAllEvents(db: D1Database): Promise<CalendarEvent[]> {
   return result.results.map(dbRowToEvent);
 }
 
+export async function getEventsByAddress(db: D1Database, address: string): Promise<CalendarEvent[]> {
+  const stmt = db.prepare(`
+    SELECT * FROM calendar_events 
+    WHERE location LIKE ?
+    ORDER BY start_date ASC
+  `);
+  
+  const searchPattern = `%${address}%`;
+  const result = await stmt.bind(searchPattern).all();
+  
+  return result.results.map(dbRowToEvent);
+}
+
 export async function getEventsByDateRange(
   db: D1Database, 
   startDate: Date, 
