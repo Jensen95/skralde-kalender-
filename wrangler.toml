@@ -1,0 +1,19 @@
+name = "ice-calendar-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# D1 database for calendar events
+[[d1_databases]]
+binding = "DB"
+database_name = "ice-calendar-db"
+database_id = "your-d1-database-id"  # Replace with your actual D1 database ID
+
+# Environment variables
+[vars]
+CALENDAR_NAME = "Ice Calendar"
+CALENDAR_DESCRIPTION = "Calendar populated from email forwards"
+
+# Email routing configuration
+[[email]]
+name = "calendar-email"
+destination_address = "calendar@yourdomain.com"  # Replace with your email
