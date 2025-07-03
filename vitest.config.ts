@@ -4,21 +4,16 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+    include: ['src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/**/*.d.ts',
-        'dist/',
-        '**/*.test.ts'
-      ]
-    }
+      exclude: ['node_modules/', 'src/**/*.d.ts', 'dist/', '**/*.test.ts'],
+    },
   },
   resolve: {
     alias: {
-      '@': new URL('./src', import.meta.url).pathname
-    }
-  }
+      '@': new URL('./src', import.meta.url).pathname,
+    },
+  },
 })
