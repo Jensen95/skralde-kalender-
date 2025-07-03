@@ -154,15 +154,15 @@ export const searchEvents = async (db: D1Database, query: string): Promise<Calen
 
 const dbRowToEvent = (row: Record<string, unknown>): CalendarEvent => {
   return {
-    id: row.id as string,
-    title: row.title as string,
-    description: (row.description as string) || undefined,
-    start: parseDateFromStorage(row.start_date as string),
-    end: parseDateFromStorage(row.end_date as string),
-    location: (row.location as string) || undefined,
-    organizer: (row.organizer as string) || undefined,
     attendees: row.attendees ? JSON.parse(row.attendees as string) : undefined,
     created: parseDateFromStorage(row.created_at as string),
+    description: (row.description as string) || undefined,
+    end: parseDateFromStorage(row.end_date as string),
+    id: row.id as string,
+    location: (row.location as string) || undefined,
     modified: parseDateFromStorage(row.modified_at as string),
+    organizer: (row.organizer as string) || undefined,
+    start: parseDateFromStorage(row.start_date as string),
+    title: row.title as string,
   }
 }

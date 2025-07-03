@@ -1,8 +1,8 @@
 import PostalMime from 'postal-mime'
 
-import { generateEventId } from './database'
-
 import type { CalendarEvent, EmailMessage, EmailParser } from './types'
+
+import { generateEventId } from './database'
 
 export class EmailEventParser implements EmailParser {
   async extractEvents(email: EmailMessage): Promise<CalendarEvent[]> {
@@ -14,16 +14,16 @@ export class EmailEventParser implements EmailParser {
     if (eventInfo.length > 0) {
       for (const info of eventInfo) {
         const event: CalendarEvent = {
-          id: generateEventId(),
-          title: info.title,
-          description: info.description,
-          start: info.start,
-          end: info.end,
-          location: info.location,
-          organizer: email.from,
           attendees: [email.to],
           created: new Date(),
+          description: info.description,
+          end: info.end,
+          id: generateEventId(),
+          location: info.location,
           modified: new Date(),
+          organizer: email.from,
+          start: info.start,
+          title: info.title,
         }
 
         // Add extended properties for database storage
@@ -42,20 +42,20 @@ export class EmailEventParser implements EmailParser {
     subject: string,
     content: string
   ): Array<{
-    title: string
     description: string
-    start: Date
     end: Date
-    location?: string
     eventType: string
+    location?: string
+    start: Date
+    title: string
   }> {
     const events: Array<{
-      title: string
       description: string
-      start: Date
       end: Date
-      location?: string
       eventType: string
+      location?: string
+      start: Date
+      title: string
     }> = []
 
     // Look for Danish waste collection patterns and common date patterns
@@ -114,12 +114,12 @@ export class EmailEventParser implements EmailParser {
         const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
 
         events.push({
-          title,
           description: this.truncateText(content, 200),
-          start: startDate,
           end: endDate,
-          location,
           eventType,
+          location,
+          start: startDate,
+          title,
         })
       }
     }
@@ -163,12 +163,12 @@ export class EmailEventParser implements EmailParser {
 
   private extractWasteCollectionType(text: string): string {
     const wasteTypes = {
-      storskrald: 'storskrald',
+      genbrugsplast: 'genbrugsplast',
       'glas/metal': 'glas_metal',
+      madaffald: 'madaffald',
       papir: 'papir',
       restaffald: 'restaffald',
-      madaffald: 'madaffald',
-      genbrugsplast: 'genbrugsplast',
+      storskrald: 'storskrald',
     }
 
     for (const [pattern, type] of Object.entries(wasteTypes)) {
@@ -182,13 +182,13 @@ export class EmailEventParser implements EmailParser {
 
   private createEventTitle(subject: string, eventType: string): string {
     const wasteTypeNames = {
-      storskrald: 'Storskrald afhentning',
-      glas_metal: 'Glas/metal afhentning',
-      papir: 'Papir afhentning',
-      restaffald: 'Restaffald afhentning',
-      madaffald: 'Madaffald afhentning',
       genbrugsplast: 'Genbrugsplast afhentning',
       general: this.cleanEventTitle(subject),
+      glas_metal: 'Glas/metal afhentning',
+      madaffald: 'Madaffald afhentning',
+      papir: 'Papir afhentning',
+      restaffald: 'Restaffald afhentning',
+      storskrald: 'Storskrald afhentning',
     }
 
     return wasteTypeNames[eventType as keyof typeof wasteTypeNames] || this.cleanEventTitle(subject)
@@ -252,11 +252,11 @@ export const parseEmailMessage = async (raw: ReadableStream<Uint8Array>): Promis
   }
 
   return {
-    from: parsed.from?.address || '',
-    to: parsed.to?.[0]?.address || '',
-    subject: parsed.subject || '',
     content: parsed.text || parsed.html || '',
+    from: parsed.from?.address || '',
     headers,
     raw: new ArrayBuffer(0), // We don't need to store the raw data
+    subject: parsed.subject || '',
+    to: parsed.to?.[0]?.address || '',
   }
 }

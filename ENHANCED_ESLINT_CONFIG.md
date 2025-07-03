@@ -22,7 +22,8 @@ This project uses a modern, comprehensive code quality setup with the latest ESL
   "typescript-eslint": "^8.0.0",
   "eslint-plugin-unicorn": "^52.0.0",
   "eslint-plugin-import": "^2.29.0",
-  "eslint-plugin-simple-import-sort": "^12.0.0",
+  "eslint-plugin-perfectionist": "^2.5.0",
+  "@vitest/eslint-plugin": "^1.0.0",
   "globals": "^14.0.0"
 }
 ```
@@ -45,15 +46,20 @@ This project uses a modern, comprehensive code quality setup with the latest ESL
 - ✅ Optional catch binding
 - ✅ Prefer spread over `apply`
 
-### 2. **Import Organization**
-Auto-sorted imports with logical grouping:
-1. Side effect imports
-2. Node.js builtins
-3. External packages
-4. Internal packages
-5. Parent directory imports
-6. Relative imports
-7. Type imports (separate)
+### 2. **Perfectionist Sorting**
+Comprehensive alphabetical sorting for:
+- **Imports** - Auto-sorted with logical grouping
+- **Named imports/exports** - Alphabetical order
+- **Object properties** - Consistent key ordering
+- **Interface properties** - Sorted type definitions
+- **Object types** - Organized type structures
+
+Import grouping order:
+1. Type imports
+2. Builtin & external packages
+3. Internal packages
+4. Parent/sibling/index imports
+5. Object imports
 
 ### 3. **Unicorn Rules (Modern JavaScript)**
 - 🚀 Better regex optimization
@@ -69,7 +75,14 @@ Auto-sorted imports with logical grouping:
 - 📝 No unused imports/variables
 - 📝 Proper type assertions
 
-### 5. **Cloudflare Workers Optimization**
+### 5. **Vitest Test Enhancement**
+- 🧪 Vitest-specific rules and best practices
+- 🧪 Prefer `test` over `it` for consistency
+- 🧪 Use `toStrictEqual` over `toEqual` for better assertions
+- 🧪 Detect disabled/focused tests
+- 🧪 Enforce consistent test patterns
+
+### 6. **Cloudflare Workers Optimization**
 - 🌐 Proper global definitions for Workers environment
 - 🌐 D1 Database types
 - 🌐 Web API globals (Request, Response, etc.)
@@ -128,15 +141,28 @@ export const myFunction = () => {
 }
 ```
 
-### Import Sorting
+### Perfectionist Sorting
 ```typescript
-// ✅ Auto-sorted imports
+// ✅ Auto-sorted imports with perfectionist
 import { someFunction } from 'external-package'
 
 import { localFunction } from './local-file'
-import { parentFunction } from '../parent'
 
 import type { SomeType } from './types'
+
+// ✅ Sorted object properties
+const config = {
+  apiKey: 'value',
+  baseUrl: 'https://api.example.com',
+  timeout: 5000,
+}
+
+// ✅ Sorted interface properties
+interface User {
+  email: string
+  id: number
+  name: string
+}
 ```
 
 ### Modern JavaScript
@@ -157,6 +183,21 @@ const text = `Hello ${name}`
 
 // ✅ Optimized (auto-suggested)
 /[\dA-Za-z]/g
+```
+
+### Vitest Test Patterns
+```typescript
+// ❌ Inconsistent test function
+it('should work', () => { })
+
+// ✅ Consistent test function
+test('should work', () => { })
+
+// ❌ Loose equality
+expect(result).toEqual(expected)
+
+// ✅ Strict equality (auto-fixed)
+expect(result).toStrictEqual(expected)
 ```
 
 ## 🔒 Environment-Specific Rules
@@ -251,10 +292,21 @@ Add to `.vscode/settings.json`:
 ## 📊 Metrics
 
 This configuration enforces:
-- **55+ ESLint rules** for code quality
+- **80+ ESLint rules** for code quality
 - **20+ TypeScript-specific rules** for type safety
-- **30+ Unicorn rules** for modern JavaScript
-- **Import sorting and organization**
+- **35+ Unicorn rules** for modern JavaScript
+- **7+ Perfectionist rules** for comprehensive sorting
+- **10+ Vitest rules** for better testing practices
+- **Import/export organization**
 - **Consistent formatting** with Prettier
 
-Result: **Higher code quality, better maintainability, modern JavaScript patterns**
+Rule categories:
+- **Core ESLint**: Base JavaScript rules
+- **TypeScript**: Type safety and modern patterns
+- **Unicorn**: Modern JavaScript best practices
+- **Perfectionist**: Alphabetical sorting everywhere
+- **Vitest**: Test consistency and best practices
+- **Import**: Module organization
+- **Prettier**: Code formatting
+
+Result: **Exceptional code quality, perfect organization, modern patterns, excellent test practices**

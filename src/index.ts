@@ -4,11 +4,11 @@ import { fromHono } from 'chanfana'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
+import type { Env } from './types'
+
 import { generateCalendarResponse, generateICalendar } from './calendar'
 import { deleteEvent, getAllEvents, initializeDatabase, storeEvent } from './database'
 import { EmailEventParser, parseEmailMessage } from './email'
-
-import type { Env } from './types'
 
 // Create new Hono app
 const app = new Hono()
@@ -17,9 +17,9 @@ const app = new Hono()
 app.use(
   '*',
   cors({
-    origin: '*',
-    allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type'],
+    allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    origin: '*',
   })
 )
 
@@ -38,14 +38,14 @@ const openapi = fromHono(app, {
   openapi_url: '/openapi.json',
   schema: {
     info: {
+      description: 'Cloudflare Worker for email-to-calendar conversion with OpenAPI documentation',
       title: 'Ice Calendar Worker API',
       version: '1.0.0',
-      description: 'Cloudflare Worker for email-to-calendar conversion with OpenAPI documentation',
     },
     servers: [
       {
-        url: 'https://your-worker.your-subdomain.workers.dev',
         description: 'Production server',
+        url: 'https://your-worker.your-subdomain.workers.dev',
       },
     ],
   },
@@ -186,8 +186,6 @@ openapi.get('/', (c) => {
 
 // Export the Hono app
 export default {
-  fetch: app.fetch,
-
   async email(message: ForwardableEmailMessage, env: Env, _ctx: ExecutionContext): Promise<void> {
     try {
       console.log('Processing email:', message.headers.get('subject'))
@@ -210,4 +208,6 @@ export default {
       console.error('Email processing error:', error)
     }
   },
+
+  fetch: app.fetch,
 }

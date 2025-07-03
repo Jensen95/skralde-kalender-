@@ -1,8 +1,8 @@
 /// <reference types="@cloudflare/workers-types" />
 
-import { getAllEvents, getEventsByAddress } from './database'
-
 import type { CalendarEvent, Env } from './types'
+
+import { getAllEvents, getEventsByAddress } from './database'
 
 export const generateICalendar = async (env: Env, address?: string): Promise<string> => {
   const events = address ? await getEventsByAddress(env.DB, address) : await getAllEvents(env.DB)
@@ -91,11 +91,11 @@ export const generateCalendarResponse = (icalContent: string, address?: string):
 
   return new Response(icalContent, {
     headers: {
-      'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
       'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Type': 'text/calendar; charset=utf-8',
       Expires: '0',
+      Pragma: 'no-cache',
     },
   })
 }

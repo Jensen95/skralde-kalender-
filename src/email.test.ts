@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
-
-import { EmailEventParser } from './email'
+import { describe, expect } from 'vitest'
 
 import type { EmailMessage } from './types'
+
+import { EmailEventParser } from './email'
 
 describe('EmailEventParser', () => {
   const parser = new EmailEventParser()
@@ -22,7 +22,7 @@ describe('EmailEventParser', () => {
   })
 
   describe('Danish waste collection emails', () => {
-    it('should parse storskrald collection email', async () => {
+    test('should parse storskrald collection email', async () => {
       const email = createMockEmail(
         'Affaldsafhentning',
         'Kære Morten Hartvig Jensen.\n\nDu vil mandag d.07-07-2025 få afhentet storskrald på adressen Nøddeskellet 8, 2730 Herlev.'
@@ -40,7 +40,7 @@ describe('EmailEventParser', () => {
       expect((events[0] as any).eventType).toBe('storskrald')
     })
 
-    it('should parse glas/metal collection email', async () => {
+    test('should parse glas/metal collection email', async () => {
       const email = createMockEmail(
         'Glas/metal afhentning',
         'Du vil mandag d.15-08-2025 få tømt glas/metal på adressen Nøddeskellet 8, 2730 Herlev.'
@@ -57,7 +57,7 @@ describe('EmailEventParser', () => {
       expect((events[0] as any).eventType).toBe('glas_metal')
     })
 
-    it('should parse short Danish date format', async () => {
+    test('should parse short Danish date format', async () => {
       const email = createMockEmail(
         'Papir afhentning',
         'Afhentning d.01-12-2025 på adressen Testvej 123, 1234 København.'
@@ -72,7 +72,7 @@ describe('EmailEventParser', () => {
       expect(events[0].start.getHours()).toBe(7) // Default to 07:00
     })
 
-    it('should handle multiple waste types', async () => {
+    test('should handle multiple waste types', async () => {
       const wasteTypes = [
         { text: 'storskrald', expected: 'storskrald', title: 'Storskrald afhentning' },
         { text: 'glas/metal', expected: 'glas_metal', title: 'Glas/metal afhentning' },
@@ -98,7 +98,7 @@ describe('EmailEventParser', () => {
   })
 
   describe('Address parsing', () => {
-    it('should extract Danish addresses with "adressen"', async () => {
+    test('should extract Danish addresses with "adressen"', async () => {
       const email = createMockEmail(
         'Test event',
         'Event d.01-01-2025 på adressen Nøddeskellet 8, 2730 Herlev.'
@@ -110,7 +110,7 @@ describe('EmailEventParser', () => {
       expect(events[0].location).toBe('Nøddeskellet 8, 2730 Herlev')
     })
 
-    it('should handle addresses with special characters', async () => {
+    test('should handle addresses with special characters', async () => {
       const email = createMockEmail(
         'Test event',
         'Event d.01-01-2025 på adressen Åbrinken 42, 2765 Smørum.'
@@ -124,7 +124,7 @@ describe('EmailEventParser', () => {
   })
 
   describe('General date parsing', () => {
-    it('should parse English date formats', async () => {
+    test('should parse English date formats', async () => {
       const email = createMockEmail(
         'Meeting',
         'Meeting scheduled for January 15, 2025 at 2:00 PM in Conference Room A.'
@@ -139,7 +139,7 @@ describe('EmailEventParser', () => {
       expect(events[0].start.getDate()).toBe(15)
     })
 
-    it('should handle ISO date format', async () => {
+    test('should handle ISO date format', async () => {
       const email = createMockEmail('Event', 'Event on 2025-03-20 14:30')
 
       const events = await parser.extractEvents(email)
@@ -152,7 +152,7 @@ describe('EmailEventParser', () => {
   })
 
   describe('Edge cases', () => {
-    it('should handle emails with no dates', async () => {
+    test('should handle emails with no dates', async () => {
       const email = createMockEmail('No date email', 'This email has no date information.')
 
       const events = await parser.extractEvents(email)
@@ -160,7 +160,7 @@ describe('EmailEventParser', () => {
       expect(events).toHaveLength(0)
     })
 
-    it('should handle empty email content', async () => {
+    test('should handle empty email content', async () => {
       const email = createMockEmail('', '')
 
       const events = await parser.extractEvents(email)
@@ -168,7 +168,7 @@ describe('EmailEventParser', () => {
       expect(events).toHaveLength(0)
     })
 
-    it('should handle malformed Danish dates', async () => {
+    test('should handle malformed Danish dates', async () => {
       const email = createMockEmail('Bad date', 'Event d.32-13-2025 should not parse.')
 
       const events = await parser.extractEvents(email)
@@ -176,7 +176,7 @@ describe('EmailEventParser', () => {
       expect(events).toHaveLength(0)
     })
 
-    it('should clean email subject for title', async () => {
+    test('should clean email subject for title', async () => {
       const email = createMockEmail('RE: FW: Meeting Tomorrow', 'Meeting d.01-01-2025')
 
       const events = await parser.extractEvents(email)
@@ -187,7 +187,7 @@ describe('EmailEventParser', () => {
   })
 
   describe('Event duration and end times', () => {
-    it('should set default 1-hour duration', async () => {
+    test('should set default 1-hour duration', async () => {
       const email = createMockEmail('Event', 'Event d.01-01-2025')
 
       const events = await parser.extractEvents(email)
@@ -197,7 +197,7 @@ describe('EmailEventParser', () => {
       expect(duration).toBe(60 * 60 * 1000) // 1 hour in milliseconds
     })
 
-    it('should handle events with 07:00 start time', async () => {
+    test('should handle events with 07:00 start time', async () => {
       const email = createMockEmail('Early event', 'Event d.01-01-2025')
 
       const events = await parser.extractEvents(email)

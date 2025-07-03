@@ -161,9 +161,9 @@ The project uses modern tooling for code quality:
 
 ### ESLint (Flat Config)
 - **Configuration**: `eslint.config.mjs` (ES Module flat config format)
-- **Features**: TypeScript support, Prettier integration, Unicorn rules, import sorting
-- **Rules**: Strict TypeScript rules, modern JavaScript patterns, arrow function enforcement
-- **Plugins**: Unicorn, Simple Import Sort, Import organization
+- **Features**: TypeScript support, Prettier integration, Unicorn rules, Perfectionist sorting, Vitest testing
+- **Rules**: Strict TypeScript rules, modern JavaScript patterns, arrow function enforcement, comprehensive sorting
+- **Plugins**: Unicorn, Perfectionist, Import organization, Vitest testing rules
 
 ### Prettier
 - **Configuration**: `.prettierrc`
