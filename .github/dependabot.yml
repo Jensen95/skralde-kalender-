@@ -7,10 +7,6 @@ updates:
       interval: 'weekly'
       day: 'monday'
       time: '04:00'
-    assignees:
-      - '@me'
-    reviewers:
-      - '@me'
     open-pull-requests-limit: 10
     commit-message:
       prefix: 'chore'
@@ -24,10 +20,6 @@ updates:
       interval: 'weekly'
       day: 'monday'
       time: '04:00'
-    assignees:
-      - '@me'
-    reviewers:
-      - '@me'
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'ci'
