@@ -32,12 +32,19 @@ Removed the problematic `wait-for-checks` job entirely. GitHub's built-in auto-m
 
 ## Testing
 To test this fix:
-1. Wait for the next Dependabot PR
-2. Verify that the auto-merge is enabled
-3. Verify that the PR merges automatically after CI passes
+1. **First, set up branch protection rules** (see `BRANCH_PROTECTION_SETUP.md`)
+2. Wait for the next Dependabot PR
+3. Verify that the auto-merge is enabled
+4. Verify that the PR merges automatically after CI passes
 
 ## Additional Notes
 - The fix is more robust because it relies on GitHub's native auto-merge behavior
 - No more custom polling logic that could fail
 - Simpler workflow that's easier to maintain
 - Works with both check runs and status checks automatically
+- **Important**: Requires branch protection rules to be configured (see `BRANCH_PROTECTION_SETUP.md`)
+
+## Prerequisites
+- Branch protection rules must be enabled on the main branch
+- Required status checks must include "Test & Build" from the CI workflow
+- Pull request reviews should be set to 0 required approvers (since workflow handles approval)
